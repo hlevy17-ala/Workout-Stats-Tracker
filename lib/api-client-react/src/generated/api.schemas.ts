@@ -84,6 +84,15 @@ export interface CreateCalorieLogBody {
   caloriesBurned?: number | null;
 }
 
+export interface AvgWeightDataPoint {
+  /** Workout date (YYYY-MM-DD) */
+  date: string;
+  /** Exercise name */
+  exercise: string;
+  /** Average weight per set in kg for this exercise on this date */
+  avgWeightKg: number;
+}
+
 export interface ErrorResponse {
   error: string;
 }

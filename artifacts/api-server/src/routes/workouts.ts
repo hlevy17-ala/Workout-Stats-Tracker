@@ -6,6 +6,7 @@ import {
   UploadWorkoutCsvResponse,
   GetWorkoutsByExerciseResponse,
   GetWorkoutsByMuscleGroupResponse,
+  GetAvgWeightByExerciseResponse,
   GetExerciseListResponse,
   GetBodyMetricsResponse,
   CreateBodyMetricBody,
@@ -165,6 +166,20 @@ router.get("/workouts/by-exercise", async (req, res): Promise<void> => {
     .orderBy(workoutSetsTable.date, workoutSetsTable.exercise);
 
   res.json(GetWorkoutsByExerciseResponse.parse(rows));
+});
+
+router.get("/workouts/avg-weight-by-exercise", async (req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      date: workoutSetsTable.date,
+      exercise: workoutSetsTable.exercise,
+      avgWeightKg: sql<number>`CAST(AVG(${workoutSetsTable.weightKg}::numeric) AS float8)`,
+    })
+    .from(workoutSetsTable)
+    .groupBy(workoutSetsTable.date, workoutSetsTable.exercise)
+    .orderBy(workoutSetsTable.date, workoutSetsTable.exercise);
+
+  res.json(GetAvgWeightByExerciseResponse.parse(rows));
 });
 
 router.get("/workouts/by-muscle-group", async (req, res): Promise<void> => {

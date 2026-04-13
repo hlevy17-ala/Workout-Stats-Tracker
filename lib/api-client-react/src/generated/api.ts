@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AvgWeightDataPoint,
   BodyMetric,
   CalorieLog,
   CreateBodyMetricBody,
@@ -737,3 +738,67 @@ export const useCreateCalorieLog = <
 > => {
   return useMutation(getCreateCalorieLogMutationOptions(options));
 };
+
+export const getGetAvgWeightByExerciseUrl = () => {
+  return `/api/workouts/avg-weight-by-exercise`;
+};
+
+export const getAvgWeightByExercise = async (
+  options?: RequestInit,
+): Promise<AvgWeightDataPoint[]> => {
+  return customFetch<AvgWeightDataPoint[]>(getGetAvgWeightByExerciseUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAvgWeightByExerciseQueryKey = () => {
+  return [`/api/workouts/avg-weight-by-exercise`] as const;
+};
+
+export const getGetAvgWeightByExerciseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAvgWeightByExercise>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAvgWeightByExercise>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetAvgWeightByExerciseQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAvgWeightByExercise>>> = ({
+    signal,
+  }) => getAvgWeightByExercise({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAvgWeightByExercise>>,
+    TError,
+    TData
+  >;
+};
+
+export type GetAvgWeightByExerciseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAvgWeightByExercise>>
+>;
+export type GetAvgWeightByExerciseQueryError = ErrorType<unknown>;
+
+export function useGetAvgWeightByExercise<
+  TData = Awaited<ReturnType<typeof getAvgWeightByExercise>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAvgWeightByExercise>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAvgWeightByExerciseQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
