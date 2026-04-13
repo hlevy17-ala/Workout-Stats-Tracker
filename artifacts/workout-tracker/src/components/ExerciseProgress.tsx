@@ -118,6 +118,47 @@ export function ExerciseProgress() {
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle className="text-xl flex items-center gap-2">
+                    <Weight className="w-5 h-5 text-chart-2" />
+                    Average Weight per Set
+                  </CardTitle>
+                  <CardDescription>Average weight lifted per set (lbs) over time</CardDescription>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground font-mono">Peak Avg</p>
+                  <p className="text-2xl font-bold text-chart-2 font-mono">{maxAvgWeight} lbs</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 pt-8">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={avgWeightData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" tickFormatter={tickFormatter} dy={10} {...axisStyle} />
+                    <YAxis dx={-10} tickFormatter={(val) => `${val}lbs`} {...axisStyle} />
+                    <Tooltip
+                      {...tooltipStyle}
+                      formatter={(value: number) => [`${value} lbs`, "Avg Weight / Set"]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="avgLbs"
+                      stroke="hsl(var(--chart-2))"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: "hsl(var(--chart-2))", stroke: "hsl(var(--background))", strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: "hsl(var(--chart-2))", stroke: "hsl(var(--background))", strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b bg-muted/20 pb-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-chart-1" />
                     {selectedExercise}
                   </CardTitle>
@@ -156,53 +197,6 @@ export function ExerciseProgress() {
                       activeDot={{ r: 6, fill: "hsl(var(--chart-1))", stroke: "hsl(var(--background))", strokeWidth: 2 }}
                     />
                   </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="overflow-hidden">
-            <CardHeader className="border-b bg-muted/20 pb-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <Weight className="w-5 h-5 text-chart-2" />
-                    Average Weight per Set
-                  </CardTitle>
-                  <CardDescription>Average weight lifted per set (lbs) over time</CardDescription>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground font-mono">Peak Avg</p>
-                  <p className="text-2xl font-bold text-chart-2 font-mono">{maxAvgWeight} lbs</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6 pt-8">
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={avgWeightData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tickFormatter={tickFormatter} dy={10} {...axisStyle} />
-                    <YAxis dx={-10} tickFormatter={(val) => `${val}lbs`} {...axisStyle} />
-                    <Tooltip
-                      {...tooltipStyle}
-                      formatter={(value: number) => [`${value} lbs`, "Avg Weight / Set"]}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="avgLbs"
-                      stroke="hsl(var(--chart-2))"
-                      strokeWidth={3}
-                      dot={{ r: 4, fill: "hsl(var(--chart-2))", stroke: "hsl(var(--background))", strokeWidth: 2 }}
-                      activeDot={{ r: 6, fill: "hsl(var(--chart-2))", stroke: "hsl(var(--background))", strokeWidth: 2 }}
-                    />
-                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
