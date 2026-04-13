@@ -75,6 +75,21 @@ export const GetAvgWeightByExerciseResponse = zod.array(
 );
 
 /**
+ * Returns average weight per set (kg) per muscle group grouped by workout date
+ * @summary Get average weight by muscle group over time
+ */
+export const GetAvgWeightByMuscleGroupResponseItem = zod.object({
+  date: zod.string().describe("Workout date (YYYY-MM-DD)"),
+  muscleGroup: zod.string().describe("Muscle group name"),
+  avgWeightKg: zod
+    .number()
+    .describe("Average weight per set in kg for this muscle group on this date"),
+});
+export const GetAvgWeightByMuscleGroupResponse = zod.array(
+  GetAvgWeightByMuscleGroupResponseItem,
+);
+
+/**
  * Returns distinct exercise names from all stored workout data
  * @summary Get list of all exercises
  */

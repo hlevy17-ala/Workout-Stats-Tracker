@@ -7,6 +7,7 @@ import {
   GetWorkoutsByExerciseResponse,
   GetWorkoutsByMuscleGroupResponse,
   GetAvgWeightByExerciseResponse,
+  GetAvgWeightByMuscleGroupResponse,
   GetExerciseListResponse,
   GetBodyMetricsResponse,
   CreateBodyMetricBody,
@@ -180,6 +181,40 @@ router.get("/workouts/avg-weight-by-exercise", async (req, res): Promise<void> =
     .orderBy(workoutSetsTable.date, workoutSetsTable.exercise);
 
   res.json(GetAvgWeightByExerciseResponse.parse(rows));
+});
+
+router.get("/workouts/avg-weight-by-muscle-group", async (req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      date: workoutSetsTable.date,
+      exercise: workoutSetsTable.exercise,
+      avgWeightKg: sql<number>`CAST(AVG(${workoutSetsTable.weightKg}::numeric) AS float8)`,
+    })
+    .from(workoutSetsTable)
+    .groupBy(workoutSetsTable.date, workoutSetsTable.exercise)
+    .orderBy(workoutSetsTable.date);
+
+  const grouped: Map<string, Map<string, { sum: number; count: number }>> = new Map();
+
+  for (const row of rows) {
+    const muscleGroup = MUSCLE_GROUP_MAP[row.exercise] ?? "Other";
+    if (!grouped.has(row.date)) grouped.set(row.date, new Map());
+    const dateMap = grouped.get(row.date)!;
+    if (!dateMap.has(muscleGroup)) dateMap.set(muscleGroup, { sum: 0, count: 0 });
+    const entry = dateMap.get(muscleGroup)!;
+    entry.sum += Number(row.avgWeightKg);
+    entry.count += 1;
+  }
+
+  const result: { date: string; muscleGroup: string; avgWeightKg: number }[] = [];
+  for (const [date, muscleGroups] of grouped) {
+    for (const [muscleGroup, { sum, count }] of muscleGroups) {
+      result.push({ date, muscleGroup, avgWeightKg: Math.round((sum / count) * 100) / 100 });
+    }
+  }
+  result.sort((a, b) => a.date.localeCompare(b.date) || a.muscleGroup.localeCompare(b.muscleGroup));
+
+  res.json(GetAvgWeightByMuscleGroupResponse.parse(result));
 });
 
 router.get("/workouts/by-muscle-group", async (req, res): Promise<void> => {

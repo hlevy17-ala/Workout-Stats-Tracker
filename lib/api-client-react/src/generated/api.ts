@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AvgWeightByMuscleGroupDataPoint,
   AvgWeightDataPoint,
   BodyMetric,
   CalorieLog,
@@ -796,6 +797,70 @@ export function useGetAvgWeightByExercise<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetAvgWeightByExerciseQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+export const getGetAvgWeightByMuscleGroupUrl = () => {
+  return `/api/workouts/avg-weight-by-muscle-group`;
+};
+
+export const getAvgWeightByMuscleGroup = async (
+  options?: RequestInit,
+): Promise<AvgWeightByMuscleGroupDataPoint[]> => {
+  return customFetch<AvgWeightByMuscleGroupDataPoint[]>(getGetAvgWeightByMuscleGroupUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAvgWeightByMuscleGroupQueryKey = () => {
+  return [`/api/workouts/avg-weight-by-muscle-group`] as const;
+};
+
+export const getGetAvgWeightByMuscleGroupQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAvgWeightByMuscleGroup>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAvgWeightByMuscleGroup>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetAvgWeightByMuscleGroupQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAvgWeightByMuscleGroup>>> = ({
+    signal,
+  }) => getAvgWeightByMuscleGroup({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAvgWeightByMuscleGroup>>,
+    TError,
+    TData
+  >;
+};
+
+export type GetAvgWeightByMuscleGroupQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAvgWeightByMuscleGroup>>
+>;
+export type GetAvgWeightByMuscleGroupQueryError = ErrorType<unknown>;
+
+export function useGetAvgWeightByMuscleGroup<
+  TData = Awaited<ReturnType<typeof getAvgWeightByMuscleGroup>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAvgWeightByMuscleGroup>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAvgWeightByMuscleGroupQueryOptions(options);
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
   };
