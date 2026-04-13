@@ -59,10 +59,10 @@ export function CsvUpload() {
           queryClient.invalidateQueries({ queryKey: getGetWorkoutsByMuscleGroupQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetExerciseListQueryKey() });
         },
-        onError: (err) => {
+        onError: () => {
           toast({
             title: "Upload Failed",
-            description: err.error || "An unexpected error occurred.",
+            description: "An unexpected error occurred. Please try again.",
             variant: "destructive",
           });
         },

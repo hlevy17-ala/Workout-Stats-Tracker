@@ -18,20 +18,22 @@ const COLORS = [
 export function MuscleGroupProgress() {
   const { data: rawData = [], isLoading } = useGetWorkoutsByMuscleGroup();
 
+  type ChartRow = { date: string } & Record<string, string | number>;
+
   const chartData = useMemo(() => {
     if (!rawData.length) return [];
 
-    // Group by date
-    const byDate = rawData.reduce((acc, curr) => {
-      if (!acc[curr.date]) {
-        acc[curr.date] = { date: curr.date };
+    const byDate: Record<string, ChartRow> = {};
+    for (const curr of rawData) {
+      if (!byDate[curr.date]) {
+        byDate[curr.date] = { date: curr.date };
       }
-      // Assuming curr.muscleGroup is mapped directly to the key
-      acc[curr.date][curr.muscleGroup] = curr.totalKg;
-      return acc;
-    }, {} as Record<string, any>);
+      byDate[curr.date][curr.muscleGroup] = curr.totalKg;
+    }
 
-    return Object.values(byDate).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return Object.values(byDate).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
   }, [rawData]);
 
   if (isLoading) {

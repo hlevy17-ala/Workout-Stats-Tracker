@@ -127,7 +127,7 @@ router.get("/workouts/by-exercise", async (req, res): Promise<void> => {
     .select({
       date: workoutSetsTable.date,
       exercise: workoutSetsTable.exercise,
-      totalKg: sql<number>`SUM(${workoutSetsTable.weightKg} * ${workoutSetsTable.reps})`,
+      totalKg: sql<number>`CAST(SUM(${workoutSetsTable.weightKg}::numeric * ${workoutSetsTable.reps}) AS float8)`,
     })
     .from(workoutSetsTable)
     .groupBy(workoutSetsTable.date, workoutSetsTable.exercise)
@@ -141,7 +141,7 @@ router.get("/workouts/by-muscle-group", async (req, res): Promise<void> => {
     .select({
       date: workoutSetsTable.date,
       exercise: workoutSetsTable.exercise,
-      totalKg: sql<number>`SUM(${workoutSetsTable.weightKg} * ${workoutSetsTable.reps})`,
+      totalKg: sql<number>`CAST(SUM(${workoutSetsTable.weightKg}::numeric * ${workoutSetsTable.reps}) AS float8)`,
     })
     .from(workoutSetsTable)
     .groupBy(workoutSetsTable.date, workoutSetsTable.exercise)
@@ -178,13 +178,27 @@ router.get("/workouts/exercises", async (req, res): Promise<void> => {
   res.json(GetExerciseListResponse.parse(rows.map((r) => r.exercise)));
 });
 
+function normalizeBodyMetric(row: {
+  id: number;
+  date: string;
+  weightLbs: string | null;
+  waistInches: string | null;
+}) {
+  return {
+    id: row.id,
+    date: row.date,
+    weightLbs: row.weightLbs != null ? parseFloat(row.weightLbs) : null,
+    waistInches: row.waistInches != null ? parseFloat(row.waistInches) : null,
+  };
+}
+
 router.get("/body-metrics", async (_req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(bodyMetricsTable)
     .orderBy(bodyMetricsTable.date);
 
-  res.json(GetBodyMetricsResponse.parse(rows));
+  res.json(GetBodyMetricsResponse.parse(rows.map(normalizeBodyMetric)));
 });
 
 router.post("/body-metrics", async (req, res): Promise<void> => {
@@ -212,7 +226,7 @@ router.post("/body-metrics", async (req, res): Promise<void> => {
     })
     .returning();
 
-  res.status(201).json(metric);
+  res.status(201).json(normalizeBodyMetric(metric));
 });
 
 export default router;
