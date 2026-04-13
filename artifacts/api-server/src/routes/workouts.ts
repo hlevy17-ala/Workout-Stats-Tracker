@@ -126,23 +126,18 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
     });
   }
 
+  await db.delete(workoutSetsTable);
+
   let inserted = 0;
   let skipped = 0;
   let errors = 0;
 
   for (const row of toInsert) {
     try {
-      const result = await db
+      await db
         .insert(workoutSetsTable)
-        .values(row)
-        .onConflictDoNothing()
-        .returning({ id: workoutSetsTable.id });
-
-      if (result.length > 0) {
-        inserted++;
-      } else {
-        skipped++;
-      }
+        .values(row);
+      inserted++;
     } catch (err) {
       errors++;
       req.log.warn({ err, row }, "Failed to insert workout set row");

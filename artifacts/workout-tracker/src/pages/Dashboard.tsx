@@ -9,35 +9,35 @@ import { CalorieTracker } from "@/components/CalorieTracker";
 export default function Dashboard() {
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col">
-      <header className="border-b bg-card">
-        <div className="max-w-5xl mx-auto w-full px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-chart-1" />
-            <span className="font-sans font-bold text-lg tracking-tight uppercase">Harry's Lifestyle Tracker</span>
+      <header className="border-b border-border bg-card">
+        <div className="max-w-5xl mx-auto w-full px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="w-6 h-6 text-primary" />
+            <span className="font-sans font-extrabold text-xl tracking-widest uppercase text-foreground">Harry's Lifestyle Tracker</span>
           </div>
         </div>
       </header>
 
       <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-8 space-y-8">
         <Tabs defaultValue="exercises" className="w-full">
-          <TabsList className="grid grid-cols-5 w-full h-auto p-1 bg-muted/50 rounded-xl">
-            <TabsTrigger value="exercises" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
+          <TabsList className="grid grid-cols-5 w-full h-auto p-1 bg-muted/40 rounded-xl border border-border">
+            <TabsTrigger value="exercises" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Dumbbell className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Movements</span>
             </TabsTrigger>
-            <TabsTrigger value="muscles" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
+            <TabsTrigger value="muscles" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Activity className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Systemic</span>
             </TabsTrigger>
-            <TabsTrigger value="metrics" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
+            <TabsTrigger value="metrics" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Scale className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Biometrics</span>
             </TabsTrigger>
-            <TabsTrigger value="nutrition" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
+            <TabsTrigger value="nutrition" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Flame className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Nutrition</span>
             </TabsTrigger>
-            <TabsTrigger value="upload" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
+            <TabsTrigger value="upload" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Upload className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Import</span>
             </TabsTrigger>
