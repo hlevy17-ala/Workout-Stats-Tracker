@@ -8,6 +8,7 @@ import {
   GetWorkoutsByMuscleGroupResponse,
   GetAvgWeightByExerciseResponse,
   GetAvgWeightByMuscleGroupResponse,
+  GetPersonalRecordsResponse,
   GetExerciseListResponse,
   GetBodyMetricsResponse,
   CreateBodyMetricBody,
@@ -324,6 +325,24 @@ router.get("/calorie-logs", async (_req, res): Promise<void> => {
   }));
 
   res.json(GetCalorieLogsResponse.parse(normalized));
+});
+
+router.get("/workouts/personal-records", async (_req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      exercise: workoutSetsTable.exercise,
+      maxWeightKg: sql<number>`CAST(MAX(${workoutSetsTable.weightKg}::numeric) AS float8)`,
+    })
+    .from(workoutSetsTable)
+    .groupBy(workoutSetsTable.exercise)
+    .orderBy(workoutSetsTable.exercise);
+
+  const records = rows.map((r) => ({
+    exercise: r.exercise,
+    maxWeightKg: r.maxWeightKg,
+  }));
+
+  res.json(GetPersonalRecordsResponse.parse(records));
 });
 
 router.post("/calorie-logs", async (req, res): Promise<void> => {

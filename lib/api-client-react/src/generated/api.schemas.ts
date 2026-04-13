@@ -84,6 +84,17 @@ export interface CreateCalorieLogBody {
   caloriesBurned?: number | null;
 }
 
+export interface PersonalRecord {
+  /** Exercise name */
+  exercise: string;
+  /** All-time max single-set weight in kg */
+  maxWeightKg: number;
+}
+
+export interface CalorieDailyGoal {
+  value: number | null;
+}
+
 export interface AvgWeightByMuscleGroupDataPoint {
   /** Workout date (YYYY-MM-DD) */
   date: string;

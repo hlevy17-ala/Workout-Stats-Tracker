@@ -60,6 +60,35 @@ export const GetWorkoutsByMuscleGroupResponse = zod.array(
 );
 
 /**
+ * Returns the all-time max single-set weight per exercise
+ * @summary Get personal records
+ */
+export const PersonalRecordItem = zod.object({
+  exercise: zod.string().describe("Exercise name"),
+  maxWeightKg: zod.number().describe("All-time max single-set weight in kg"),
+});
+export const GetPersonalRecordsResponse = zod.array(PersonalRecordItem);
+
+/**
+ * Returns the stored daily calorie goal, or null if not set
+ * @summary Get calorie daily goal
+ */
+export const GetCalorieDailyGoalResponse = zod.object({
+  value: zod.number().nullable(),
+});
+
+/**
+ * Set the daily calorie goal
+ * @summary Set calorie daily goal
+ */
+export const SetCalorieDailyGoalBody = zod.object({
+  value: zod.number().int().positive(),
+});
+export const SetCalorieDailyGoalResponse = zod.object({
+  value: zod.number(),
+});
+
+/**
  * Returns average weight per set (kg) per exercise grouped by workout date
  * @summary Get average weight by exercise over time
  */

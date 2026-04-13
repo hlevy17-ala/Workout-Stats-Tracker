@@ -1,17 +1,20 @@
 import { useState, useMemo, useEffect } from "react";
-import { useGetWorkoutsByExercise, useGetExerciseList, useGetAvgWeightByExercise } from "@workspace/api-client-react";
+import { useGetWorkoutsByExercise, useGetExerciseList, useGetAvgWeightByExercise, useGetPersonalRecords } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Activity, Weight } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, Weight, Trophy, Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function ExerciseProgress() {
   const [selectedExercise, setSelectedExercise] = useState<string>("");
-  
+  const [viewMode, setViewMode] = useState<"history" | "comparison">("history");
+
   const { data: exercises = [], isLoading: isLoadingList } = useGetExerciseList();
   const { data: allWorkouts = [], isLoading: isLoadingWorkouts } = useGetWorkoutsByExercise();
   const { data: allAvgWeights = [], isLoading: isLoadingAvg } = useGetAvgWeightByExercise();
+  const { data: personalRecords = [], isLoading: isLoadingPRs } = useGetPersonalRecords();
 
   useEffect(() => {
     if (exercises.length > 0 && !selectedExercise) {
@@ -50,6 +53,15 @@ export function ExerciseProgress() {
     return Math.max(...avgWeightData.map(d => d.avgLbs));
   }, [avgWeightData]);
 
+  const comparisonData = useMemo(() => {
+    if (avgWeightData.length < 1 || volumeData.length < 1) return null;
+    const lastAvg = avgWeightData[avgWeightData.length - 1];
+    const prevAvg = avgWeightData.length >= 2 ? avgWeightData[avgWeightData.length - 2] : null;
+    const lastVol = volumeData[volumeData.length - 1];
+    const prevVol = volumeData.length >= 2 ? volumeData[volumeData.length - 2] : null;
+    return { lastAvg, prevAvg, lastVol, prevVol };
+  }, [avgWeightData, volumeData]);
+
   const tickFormatter = (val: string) => {
     const d = new Date(val);
     return `${d.getMonth() + 1}/${d.getDate()}`;
@@ -72,29 +84,99 @@ export function ExerciseProgress() {
     labelStyle: { color: "hsl(var(--muted-foreground))", marginBottom: 4 },
   };
 
-  if (isLoadingList || isLoadingWorkouts || isLoadingAvg) {
-    return <Skeleton className="h-[400px] w-full" />;
+  function DeltaBadge({ current, previous }: { current: number; previous: number | null }) {
+    if (previous === null || previous === 0) return <span className="text-muted-foreground text-xs">first session</span>;
+    const pct = ((current - previous) / previous) * 100;
+    const rounded = Math.round(Math.abs(pct) * 10) / 10;
+    if (Math.abs(pct) < 0.1) return <span className="text-muted-foreground text-xs flex items-center gap-1"><Minus className="w-3 h-3" />No change</span>;
+    const up = pct > 0;
+    return (
+      <span className={`text-xs font-semibold flex items-center gap-1 ${up ? "text-chart-2" : "text-destructive"}`}>
+        {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+        {up ? "+" : "-"}{rounded}%
+      </span>
+    );
+  }
+
+  function formatDate(dateStr: string) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  const isLoading = isLoadingList || isLoadingWorkouts || isLoadingAvg || isLoadingPRs;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-[80px] w-full" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
+      {personalRecords.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Trophy className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Personal Records</h3>
+          </div>
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-3 w-max">
+              {personalRecords.map(pr => (
+                <div
+                  key={pr.exercise}
+                  className="flex-shrink-0 rounded-lg border border-border bg-card px-4 py-3 min-w-[140px]"
+                >
+                  <p className="text-xs text-muted-foreground truncate max-w-[130px] mb-1">{pr.exercise}</p>
+                  <p className="text-xl font-bold font-mono text-primary">
+                    {Math.round(pr.maxWeightKg * KG_TO_LBS)} lbs
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Movement Tracking</h2>
           <p className="text-muted-foreground">Analyze your volume and average weight progression per exercise.</p>
         </div>
-        
-        <div className="w-full sm:w-[300px]">
-          <Select value={selectedExercise} onValueChange={setSelectedExercise}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select exercise" />
-            </SelectTrigger>
-            <SelectContent>
-              {exercises.map(ex => (
-                <SelectItem key={ex} value={ex}>{ex}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="w-full sm:w-[260px]">
+            <Select value={selectedExercise} onValueChange={setSelectedExercise}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select exercise" />
+              </SelectTrigger>
+              <SelectContent>
+                {exercises.map(ex => (
+                  <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex rounded-md border border-border overflow-hidden shrink-0">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setViewMode("history")}
+              className={`rounded-none px-3 h-9 text-xs font-medium ${viewMode === "history" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "text-muted-foreground"}`}
+            >
+              History
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setViewMode("comparison")}
+              className={`rounded-none px-3 h-9 text-xs font-medium border-l border-border ${viewMode === "comparison" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "text-muted-foreground"}`}
+            >
+              vs Last
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -111,6 +193,69 @@ export function ExerciseProgress() {
             <p>No data found for this exercise.</p>
           </div>
         </Card>
+      ) : viewMode === "comparison" ? (
+        comparisonData ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription className="text-xs uppercase tracking-widest font-semibold">Latest Session</CardDescription>
+                  <CardTitle className="text-base">{formatDate(comparisonData.lastAvg.date)}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Weight className="w-3 h-3" />Avg Weight / Set</p>
+                    <p className="text-3xl font-bold font-mono text-chart-2">{comparisonData.lastAvg.avgLbs} lbs</p>
+                    <DeltaBadge
+                      current={comparisonData.lastAvg.avgLbs}
+                      previous={comparisonData.prevAvg?.avgLbs ?? null}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" />Total Volume</p>
+                    <p className="text-3xl font-bold font-mono text-chart-1">{comparisonData.lastVol.totalLbs.toLocaleString()} lbs</p>
+                    <DeltaBadge
+                      current={comparisonData.lastVol.totalLbs}
+                      previous={comparisonData.prevVol?.totalLbs ?? null}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="opacity-70">
+                <CardHeader className="pb-2">
+                  <CardDescription className="text-xs uppercase tracking-widest font-semibold">Previous Session</CardDescription>
+                  <CardTitle className="text-base">
+                    {comparisonData.prevAvg ? formatDate(comparisonData.prevAvg.date) : "—"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Weight className="w-3 h-3" />Avg Weight / Set</p>
+                    <p className="text-3xl font-bold font-mono text-muted-foreground">
+                      {comparisonData.prevAvg ? `${comparisonData.prevAvg.avgLbs} lbs` : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" />Total Volume</p>
+                    <p className="text-3xl font-bold font-mono text-muted-foreground">
+                      {comparisonData.prevVol ? `${comparisonData.prevVol.totalLbs.toLocaleString()} lbs` : "—"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Comparing the two most recent sessions for <span className="font-semibold text-foreground">{selectedExercise}</span>.
+              Switch to History to see the full timeline.
+            </p>
+          </div>
+        ) : (
+          <Card className="h-[300px] flex items-center justify-center border-dashed">
+            <p className="text-muted-foreground text-sm">Not enough sessions to compare.</p>
+          </Card>
+        )
       ) : (
         <div className="space-y-6">
           <Card className="overflow-hidden">

@@ -20,6 +20,7 @@ import type {
   AvgWeightByMuscleGroupDataPoint,
   AvgWeightDataPoint,
   BodyMetric,
+  CalorieDailyGoal,
   CalorieLog,
   CreateBodyMetricBody,
   CreateCalorieLogBody,
@@ -27,6 +28,7 @@ import type {
   ExerciseDataPoint,
   HealthStatus,
   MuscleGroupDataPoint,
+  PersonalRecord,
   UploadResult,
   UploadWorkoutCsvBody,
 } from "./api.schemas";
@@ -866,4 +868,146 @@ export function useGetAvgWeightByMuscleGroup<
   };
   query.queryKey = queryOptions.queryKey;
   return query;
+}
+
+// ─── Personal Records ────────────────────────────────────────────────────────
+
+export const getGetPersonalRecordsUrl = () => `/api/workouts/personal-records`;
+
+export const getPersonalRecords = async (
+  options?: RequestInit,
+): Promise<PersonalRecord[]> => {
+  return customFetch<PersonalRecord[]>(getGetPersonalRecordsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPersonalRecordsQueryKey = () =>
+  [`/api/workouts/personal-records`] as const;
+
+export const getGetPersonalRecordsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPersonalRecords>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getPersonalRecords>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetPersonalRecordsQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPersonalRecords>>> = ({
+    signal,
+  }) => getPersonalRecords({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPersonalRecords>>,
+    TError,
+    TData
+  >;
+};
+
+export function useGetPersonalRecords<
+  TData = Awaited<ReturnType<typeof getPersonalRecords>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getPersonalRecords>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPersonalRecordsQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+// ─── Calorie Daily Goal ──────────────────────────────────────────────────────
+
+export const getGetCalorieDailyGoalUrl = () => `/api/settings/calorie-daily-goal`;
+
+export const getCalorieDailyGoal = async (
+  options?: RequestInit,
+): Promise<CalorieDailyGoal> => {
+  return customFetch<CalorieDailyGoal>(getGetCalorieDailyGoalUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCalorieDailyGoalQueryKey = () =>
+  [`/api/settings/calorie-daily-goal`] as const;
+
+export const getGetCalorieDailyGoalQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCalorieDailyGoal>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getCalorieDailyGoal>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetCalorieDailyGoalQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCalorieDailyGoal>>> = ({
+    signal,
+  }) => getCalorieDailyGoal({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCalorieDailyGoal>>,
+    TError,
+    TData
+  >;
+};
+
+export function useGetCalorieDailyGoal<
+  TData = Awaited<ReturnType<typeof getCalorieDailyGoal>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getCalorieDailyGoal>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCalorieDailyGoalQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+export const getSetCalorieDailyGoalMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    CalorieDailyGoal,
+    TError,
+    { data: { value: number } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<CalorieDailyGoal, TError, { data: { value: number } }, TContext> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  return {
+    mutationFn: async ({ data }) => {
+      return customFetch<CalorieDailyGoal>(getGetCalorieDailyGoalUrl(), {
+        ...requestOptions,
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...requestOptions?.headers },
+        body: JSON.stringify(data),
+      });
+    },
+    ...mutationOptions,
+  };
+};
+
+export function useSetCalorieDailyGoal<
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    CalorieDailyGoal,
+    TError,
+    { data: { value: number } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<CalorieDailyGoal, TError, { data: { value: number } }, TContext> {
+  const mutationOptions = getSetCalorieDailyGoalMutationOptions(options);
+  return useMutation(mutationOptions);
 }

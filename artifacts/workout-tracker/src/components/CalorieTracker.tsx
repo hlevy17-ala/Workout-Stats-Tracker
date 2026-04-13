@@ -1,10 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { useGetCalorieLogs, useCreateCalorieLog, getGetCalorieLogsQueryKey } from "@workspace/api-client-react";
+import { CalendarIcon, Target } from "lucide-react";
+import {
+  useGetCalorieLogs,
+  useCreateCalorieLog,
+  useGetCalorieDailyGoal,
+  useSetCalorieDailyGoal,
+  getGetCalorieLogsQueryKey,
+  getGetCalorieDailyGoalQueryKey,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { cn } from "@/lib/utils";
@@ -26,9 +33,22 @@ const formSchema = z.object({
 
 export function CalorieTracker() {
   const { data: logs = [], isLoading } = useGetCalorieLogs();
+  const { data: goalData, isLoading: isLoadingGoal } = useGetCalorieDailyGoal();
   const createLog = useCreateCalorieLog();
+  const setGoalMutation = useSetCalorieDailyGoal();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const [goalInput, setGoalInput] = useState<string>("");
+  const [goalEditing, setGoalEditing] = useState(false);
+
+  useEffect(() => {
+    if (goalData?.value != null && !goalEditing) {
+      setGoalInput(String(goalData.value));
+    }
+  }, [goalData, goalEditing]);
+
+  const calorieGoal = goalData?.value ?? null;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,6 +81,27 @@ export function CalorieTracker() {
     );
   };
 
+  const handleSaveGoal = () => {
+    const val = parseInt(goalInput, 10);
+    if (isNaN(val) || val <= 0) {
+      toast({ title: "Please enter a valid calorie goal.", variant: "destructive" });
+      return;
+    }
+    setGoalMutation.mutate(
+      { data: { value: val } },
+      {
+        onSuccess: () => {
+          toast({ title: "Calorie goal saved." });
+          setGoalEditing(false);
+          queryClient.invalidateQueries({ queryKey: getGetCalorieDailyGoalQueryKey() });
+        },
+        onError: () => {
+          toast({ title: "Failed to save goal.", variant: "destructive" });
+        },
+      }
+    );
+  };
+
   const chartData = useMemo(() => {
     if (!logs.length) return [];
     return [...logs]
@@ -83,6 +124,12 @@ export function CalorieTracker() {
     return Math.round(total / chartData.length);
   }, [chartData]);
 
+  const avgConsumed = useMemo(() => {
+    if (!chartData.length) return 0;
+    const total = chartData.reduce((sum, d) => sum + d.caloriesConsumed, 0);
+    return Math.round(total / chartData.length);
+  }, [chartData]);
+
   const tooltipStyle = {
     backgroundColor: "hsl(var(--card))",
     borderColor: "hsl(var(--border))",
@@ -99,9 +146,52 @@ export function CalorieTracker() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Nutrition</h2>
-        <p className="text-muted-foreground">Log your calories to track your daily deficit over time.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Nutrition</h2>
+          <p className="text-muted-foreground">Log your calories to track your daily deficit over time.</p>
+        </div>
+
+        {!isLoadingGoal && (
+          <Card className="border-primary/30 bg-primary/5 w-full sm:w-auto">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Target className="w-4 h-4 text-primary shrink-0" />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Daily Goal</span>
+                  <Input
+                    type="number"
+                    step="50"
+                    placeholder="e.g. 2000"
+                    value={goalInput}
+                    onChange={(e) => { setGoalInput(e.target.value); setGoalEditing(true); }}
+                    className="w-24 h-8 text-sm bg-background font-mono"
+                  />
+                  <span className="text-sm text-muted-foreground">kcal</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSaveGoal}
+                    disabled={setGoalMutation.isPending || !goalInput}
+                    className="h-8 px-3 text-xs"
+                  >
+                    {setGoalMutation.isPending ? "Saving…" : "Save"}
+                  </Button>
+                </div>
+              </div>
+              {calorieGoal != null && (
+                <p className="text-xs text-muted-foreground mt-2 ml-7">
+                  Avg consumed: <span className={`font-semibold font-mono ${avgConsumed > calorieGoal ? "text-destructive" : "text-chart-2"}`}>{avgConsumed.toLocaleString()} kcal</span>
+                  {" "}·{" "}
+                  {avgConsumed <= calorieGoal
+                    ? <span className="text-chart-2">under goal by {(calorieGoal - avgConsumed).toLocaleString()} kcal/day</span>
+                    : <span className="text-destructive">over goal by {(avgConsumed - calorieGoal).toLocaleString()} kcal/day</span>
+                  }
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card className="border-primary/20 bg-primary/5">
@@ -215,7 +305,7 @@ export function CalorieTracker() {
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle className="text-lg">Daily Calories</CardTitle>
-                  <CardDescription>Consumed vs. burned per day</CardDescription>
+                  <CardDescription>Consumed vs. burned per day{calorieGoal ? ` · goal: ${calorieGoal.toLocaleString()} kcal` : ""}</CardDescription>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Avg Daily Deficit</p>
@@ -253,6 +343,15 @@ export function CalorieTracker() {
                       wrapperStyle={{ paddingTop: "16px" }}
                       iconType="circle"
                     />
+                    {calorieGoal != null && (
+                      <ReferenceLine
+                        y={calorieGoal}
+                        stroke="hsl(var(--primary))"
+                        strokeDasharray="6 3"
+                        strokeWidth={2}
+                        label={{ value: "Goal", position: "insideTopRight", fill: "hsl(var(--primary))", fontSize: 11, fontWeight: 600 }}
+                      />
+                    )}
                     <Bar dataKey="caloriesConsumed" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="caloriesBurned" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                   </BarChart>
