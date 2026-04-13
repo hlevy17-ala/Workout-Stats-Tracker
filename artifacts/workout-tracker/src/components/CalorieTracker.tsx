@@ -206,7 +206,7 @@ export function CalorieTracker() {
                     placeholder="e.g. 2000"
                     value={goalInput}
                     onChange={(e) => { setGoalInput(e.target.value); setGoalEditing(true); }}
-                    className="w-24 h-8 text-sm bg-background font-mono"
+                    className="w-24 h-8 text-sm bg-background tabular-nums"
                   />
                   <span className="text-sm text-muted-foreground">kcal</span>
                   <Button
@@ -222,7 +222,7 @@ export function CalorieTracker() {
               </div>
               {calorieGoal != null && (
                 <p className="text-xs text-muted-foreground ml-7">
-                  Avg consumed: <span className={`font-semibold font-mono ${avgConsumed > calorieGoal ? "text-destructive" : "text-chart-2"}`}>{avgConsumed.toLocaleString()} kcal</span>
+                  Avg consumed: <span className={`font-semibold tabular-nums ${avgConsumed > calorieGoal ? "text-destructive" : "text-chart-2"}`}>{avgConsumed.toLocaleString()} kcal</span>
                   {" "}·{" "}
                   {avgConsumed <= calorieGoal
                     ? <span className="text-chart-2">under by {(calorieGoal - avgConsumed).toLocaleString()} kcal/day</span>
@@ -241,7 +241,7 @@ export function CalorieTracker() {
                     placeholder="e.g. 400"
                     value={burnGoalInput}
                     onChange={(e) => { setBurnGoalInput(e.target.value); setBurnGoalEditing(true); }}
-                    className="w-24 h-8 text-sm bg-background font-mono"
+                    className="w-24 h-8 text-sm bg-background tabular-nums"
                   />
                   <span className="text-sm text-muted-foreground">kcal</span>
                   <Button
@@ -257,7 +257,7 @@ export function CalorieTracker() {
               </div>
               {calorieBurnGoal != null && (
                 <p className="text-xs text-muted-foreground ml-7">
-                  Avg burned: <span className={`font-semibold font-mono ${avgBurned >= calorieBurnGoal ? "text-chart-2" : "text-destructive"}`}>{avgBurned.toLocaleString()} kcal</span>
+                  Avg burned: <span className={`font-semibold tabular-nums ${avgBurned >= calorieBurnGoal ? "text-chart-2" : "text-destructive"}`}>{avgBurned.toLocaleString()} kcal</span>
                   {" "}·{" "}
                   {avgBurned >= calorieBurnGoal
                     ? <span className="text-chart-2">above goal by {(avgBurned - calorieBurnGoal).toLocaleString()} kcal/day</span>
@@ -385,7 +385,7 @@ export function CalorieTracker() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Avg Daily Deficit</p>
-                  <p className={`text-2xl font-bold font-mono ${avgDeficit >= 0 ? "text-chart-2" : "text-destructive"}`}>
+                  <p className={`text-2xl font-bold tabular-nums ${avgDeficit >= 0 ? "text-chart-2" : "text-destructive"}`}>
                     {avgDeficit >= 0 ? "+" : ""}{avgDeficit.toLocaleString()} kcal
                   </p>
                 </div>

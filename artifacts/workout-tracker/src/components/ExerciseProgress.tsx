@@ -130,7 +130,7 @@ export function ExerciseProgress() {
                   className="flex-shrink-0 rounded-lg border border-border bg-card px-4 py-3 min-w-[140px]"
                 >
                   <p className="text-xs text-muted-foreground truncate max-w-[130px] mb-1">{pr.exercise}</p>
-                  <p className="text-xl font-bold font-mono text-primary">
+                  <p className="text-xl font-bold tabular-nums text-primary">
                     {Math.round(pr.maxWeightKg * KG_TO_LBS)} lbs
                   </p>
                 </div>
@@ -205,7 +205,7 @@ export function ExerciseProgress() {
                 <CardContent className="space-y-4">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Weight className="w-3 h-3" />Avg Weight / Set</p>
-                    <p className="text-3xl font-bold font-mono text-chart-2">{comparisonData.lastAvg.avgLbs} lbs</p>
+                    <p className="text-3xl font-bold tabular-nums text-chart-2">{comparisonData.lastAvg.avgLbs} lbs</p>
                     <DeltaBadge
                       current={comparisonData.lastAvg.avgLbs}
                       previous={comparisonData.prevAvg?.avgLbs ?? null}
@@ -213,7 +213,7 @@ export function ExerciseProgress() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" />Total Volume</p>
-                    <p className="text-3xl font-bold font-mono text-chart-1">{comparisonData.lastVol.totalLbs.toLocaleString()} lbs</p>
+                    <p className="text-3xl font-bold tabular-nums text-chart-1">{comparisonData.lastVol.totalLbs.toLocaleString()} lbs</p>
                     <DeltaBadge
                       current={comparisonData.lastVol.totalLbs}
                       previous={comparisonData.prevVol?.totalLbs ?? null}
@@ -232,13 +232,13 @@ export function ExerciseProgress() {
                 <CardContent className="space-y-4">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Weight className="w-3 h-3" />Avg Weight / Set</p>
-                    <p className="text-3xl font-bold font-mono text-muted-foreground">
+                    <p className="text-3xl font-bold tabular-nums text-muted-foreground">
                       {comparisonData.prevAvg ? `${comparisonData.prevAvg.avgLbs} lbs` : "—"}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" />Total Volume</p>
-                    <p className="text-3xl font-bold font-mono text-muted-foreground">
+                    <p className="text-3xl font-bold tabular-nums text-muted-foreground">
                       {comparisonData.prevVol ? `${comparisonData.prevVol.totalLbs.toLocaleString()} lbs` : "—"}
                     </p>
                   </div>
@@ -269,8 +269,8 @@ export function ExerciseProgress() {
                   <CardDescription>Average weight lifted per set (lbs) over time</CardDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground font-mono">Peak Avg</p>
-                  <p className="text-2xl font-bold text-chart-2 font-mono">{maxAvgWeight} lbs</p>
+                  <p className="text-sm text-muted-foreground">Peak Avg</p>
+                  <p className="text-2xl font-bold text-chart-2 tabular-nums">{maxAvgWeight} lbs</p>
                 </div>
               </div>
             </CardHeader>
@@ -310,8 +310,8 @@ export function ExerciseProgress() {
                   <CardDescription>Total volume (lbs) over time</CardDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground font-mono">Peak Volume</p>
-                  <p className="text-2xl font-bold text-chart-1 font-mono">{maxVolume.toLocaleString()} lbs</p>
+                  <p className="text-sm text-muted-foreground">Peak Volume</p>
+                  <p className="text-2xl font-bold text-chart-1 tabular-nums">{maxVolume.toLocaleString()} lbs</p>
                 </div>
               </div>
             </CardHeader>
