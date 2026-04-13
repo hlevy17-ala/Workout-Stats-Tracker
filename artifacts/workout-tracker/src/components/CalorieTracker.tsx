@@ -9,8 +9,11 @@ import {
   useCreateCalorieLog,
   useGetCalorieDailyGoal,
   useSetCalorieDailyGoal,
+  useGetCalorieBurnGoal,
+  useSetCalorieBurnGoal,
   getGetCalorieLogsQueryKey,
   getGetCalorieDailyGoalQueryKey,
+  getGetCalorieBurnGoalQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -34,13 +37,17 @@ const formSchema = z.object({
 export function CalorieTracker() {
   const { data: logs = [], isLoading } = useGetCalorieLogs();
   const { data: goalData, isLoading: isLoadingGoal } = useGetCalorieDailyGoal();
+  const { data: burnGoalData, isLoading: isLoadingBurnGoal } = useGetCalorieBurnGoal();
   const createLog = useCreateCalorieLog();
   const setGoalMutation = useSetCalorieDailyGoal();
+  const setBurnGoalMutation = useSetCalorieBurnGoal();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const [goalInput, setGoalInput] = useState<string>("");
   const [goalEditing, setGoalEditing] = useState(false);
+  const [burnGoalInput, setBurnGoalInput] = useState<string>("");
+  const [burnGoalEditing, setBurnGoalEditing] = useState(false);
 
   useEffect(() => {
     if (goalData?.value != null && !goalEditing) {
@@ -48,7 +55,14 @@ export function CalorieTracker() {
     }
   }, [goalData, goalEditing]);
 
+  useEffect(() => {
+    if (burnGoalData?.value != null && !burnGoalEditing) {
+      setBurnGoalInput(String(burnGoalData.value));
+    }
+  }, [burnGoalData, burnGoalEditing]);
+
   const calorieGoal = goalData?.value ?? null;
+  const calorieBurnGoal = burnGoalData?.value ?? null;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -102,6 +116,27 @@ export function CalorieTracker() {
     );
   };
 
+  const handleSaveBurnGoal = () => {
+    const val = parseInt(burnGoalInput, 10);
+    if (isNaN(val) || val <= 0) {
+      toast({ title: "Please enter a valid burn goal.", variant: "destructive" });
+      return;
+    }
+    setBurnGoalMutation.mutate(
+      { data: { value: val } },
+      {
+        onSuccess: () => {
+          toast({ title: "Burn goal saved." });
+          setBurnGoalEditing(false);
+          queryClient.invalidateQueries({ queryKey: getGetCalorieBurnGoalQueryKey() });
+        },
+        onError: () => {
+          toast({ title: "Failed to save burn goal.", variant: "destructive" });
+        },
+      }
+    );
+  };
+
   const chartData = useMemo(() => {
     if (!logs.length) return [];
     return [...logs]
@@ -130,6 +165,12 @@ export function CalorieTracker() {
     return Math.round(total / chartData.length);
   }, [chartData]);
 
+  const avgBurned = useMemo(() => {
+    if (!chartData.length) return 0;
+    const total = chartData.reduce((sum, d) => sum + d.caloriesBurned, 0);
+    return Math.round(total / chartData.length);
+  }, [chartData]);
+
   const tooltipStyle = {
     backgroundColor: "hsl(var(--card))",
     borderColor: "hsl(var(--border))",
@@ -152,13 +193,13 @@ export function CalorieTracker() {
           <p className="text-muted-foreground">Log your calories to track your daily deficit over time.</p>
         </div>
 
-        {!isLoadingGoal && (
+        {(!isLoadingGoal || !isLoadingBurnGoal) && (
           <Card className="border-primary/30 bg-primary/5 w-full sm:w-auto">
-            <CardContent className="p-4">
+            <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-3">
                 <Target className="w-4 h-4 text-primary shrink-0" />
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Daily Goal</span>
+                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Consume Goal</span>
                   <Input
                     type="number"
                     step="50"
@@ -180,12 +221,47 @@ export function CalorieTracker() {
                 </div>
               </div>
               {calorieGoal != null && (
-                <p className="text-xs text-muted-foreground mt-2 ml-7">
+                <p className="text-xs text-muted-foreground ml-7">
                   Avg consumed: <span className={`font-semibold font-mono ${avgConsumed > calorieGoal ? "text-destructive" : "text-chart-2"}`}>{avgConsumed.toLocaleString()} kcal</span>
                   {" "}·{" "}
                   {avgConsumed <= calorieGoal
-                    ? <span className="text-chart-2">under goal by {(calorieGoal - avgConsumed).toLocaleString()} kcal/day</span>
-                    : <span className="text-destructive">over goal by {(avgConsumed - calorieGoal).toLocaleString()} kcal/day</span>
+                    ? <span className="text-chart-2">under by {(calorieGoal - avgConsumed).toLocaleString()} kcal/day</span>
+                    : <span className="text-destructive">over by {(avgConsumed - calorieGoal).toLocaleString()} kcal/day</span>
+                  }
+                </p>
+              )}
+
+              <div className="border-t border-border/50 pt-3 flex items-center gap-3">
+                <Target className="w-4 h-4 text-chart-2 shrink-0" />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Burn Goal</span>
+                  <Input
+                    type="number"
+                    step="50"
+                    placeholder="e.g. 400"
+                    value={burnGoalInput}
+                    onChange={(e) => { setBurnGoalInput(e.target.value); setBurnGoalEditing(true); }}
+                    className="w-24 h-8 text-sm bg-background font-mono"
+                  />
+                  <span className="text-sm text-muted-foreground">kcal</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSaveBurnGoal}
+                    disabled={setBurnGoalMutation.isPending || !burnGoalInput}
+                    className="h-8 px-3 text-xs"
+                  >
+                    {setBurnGoalMutation.isPending ? "Saving…" : "Save"}
+                  </Button>
+                </div>
+              </div>
+              {calorieBurnGoal != null && (
+                <p className="text-xs text-muted-foreground ml-7">
+                  Avg burned: <span className={`font-semibold font-mono ${avgBurned >= calorieBurnGoal ? "text-chart-2" : "text-destructive"}`}>{avgBurned.toLocaleString()} kcal</span>
+                  {" "}·{" "}
+                  {avgBurned >= calorieBurnGoal
+                    ? <span className="text-chart-2">above goal by {(avgBurned - calorieBurnGoal).toLocaleString()} kcal/day</span>
+                    : <span className="text-destructive">below goal by {(calorieBurnGoal - avgBurned).toLocaleString()} kcal/day</span>
                   }
                 </p>
               )}
@@ -349,7 +425,16 @@ export function CalorieTracker() {
                         stroke="hsl(var(--primary))"
                         strokeDasharray="6 3"
                         strokeWidth={2}
-                        label={{ value: "Goal", position: "insideTopRight", fill: "hsl(var(--primary))", fontSize: 11, fontWeight: 600 }}
+                        label={{ value: "Consume Goal", position: "insideTopRight", fill: "hsl(var(--primary))", fontSize: 11, fontWeight: 600 }}
+                      />
+                    )}
+                    {calorieBurnGoal != null && (
+                      <ReferenceLine
+                        y={calorieBurnGoal}
+                        stroke="hsl(var(--chart-2))"
+                        strokeDasharray="6 3"
+                        strokeWidth={2}
+                        label={{ value: "Burn Goal", position: "insideBottomRight", fill: "hsl(var(--chart-2))", fontSize: 11, fontWeight: 600 }}
                       />
                     )}
                     <Bar dataKey="caloriesConsumed" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />

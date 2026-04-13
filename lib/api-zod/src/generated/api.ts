@@ -89,6 +89,25 @@ export const SetCalorieDailyGoalResponse = zod.object({
 });
 
 /**
+ * Returns the stored daily calorie burn goal, or null if not set
+ * @summary Get calorie burn goal
+ */
+export const GetCalorieBurnGoalResponse = zod.object({
+  value: zod.number().nullable(),
+});
+
+/**
+ * Set the daily calorie burn goal
+ * @summary Set calorie burn goal
+ */
+export const SetCalorieBurnGoalBody = zod.object({
+  value: zod.number().int().positive(),
+});
+export const SetCalorieBurnGoalResponse = zod.object({
+  value: zod.number(),
+});
+
+/**
  * Returns average weight per set (kg) per exercise grouped by workout date
  * @summary Get average weight by exercise over time
  */

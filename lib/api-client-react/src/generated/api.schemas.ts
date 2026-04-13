@@ -95,6 +95,10 @@ export interface CalorieDailyGoal {
   value: number | null;
 }
 
+export interface CalorieBurnGoal {
+  value: number | null;
+}
+
 export interface AvgWeightByMuscleGroupDataPoint {
   /** Workout date (YYYY-MM-DD) */
   date: string;

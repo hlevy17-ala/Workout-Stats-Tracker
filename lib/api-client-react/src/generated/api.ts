@@ -20,6 +20,7 @@ import type {
   AvgWeightByMuscleGroupDataPoint,
   AvgWeightDataPoint,
   BodyMetric,
+  CalorieBurnGoal,
   CalorieDailyGoal,
   CalorieLog,
   CreateBodyMetricBody,
@@ -1009,5 +1010,97 @@ export function useSetCalorieDailyGoal<
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<CalorieDailyGoal, TError, { data: { value: number } }, TContext> {
   const mutationOptions = getSetCalorieDailyGoalMutationOptions(options);
+  return useMutation(mutationOptions);
+}
+
+// ─── Calorie Burn Goal ───────────────────────────────────────────────────────
+
+export const getGetCalorieBurnGoalUrl = () => `/api/settings/calorie-burn-goal`;
+
+export const getCalorieBurnGoal = async (
+  options?: RequestInit,
+): Promise<CalorieBurnGoal> => {
+  return customFetch<CalorieBurnGoal>(getGetCalorieBurnGoalUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCalorieBurnGoalQueryKey = () =>
+  [`/api/settings/calorie-burn-goal`] as const;
+
+export const getGetCalorieBurnGoalQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCalorieBurnGoal>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getCalorieBurnGoal>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetCalorieBurnGoalQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCalorieBurnGoal>>> = ({
+    signal,
+  }) => getCalorieBurnGoal({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCalorieBurnGoal>>,
+    TError,
+    TData
+  >;
+};
+
+export function useGetCalorieBurnGoal<
+  TData = Awaited<ReturnType<typeof getCalorieBurnGoal>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getCalorieBurnGoal>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCalorieBurnGoalQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+export const getSetCalorieBurnGoalMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    CalorieBurnGoal,
+    TError,
+    { data: { value: number } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<CalorieBurnGoal, TError, { data: { value: number } }, TContext> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  return {
+    mutationFn: async ({ data }) => {
+      return customFetch<CalorieBurnGoal>(getGetCalorieBurnGoalUrl(), {
+        ...requestOptions,
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...requestOptions?.headers },
+        body: JSON.stringify(data),
+      });
+    },
+    ...mutationOptions,
+  };
+};
+
+export function useSetCalorieBurnGoal<
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    CalorieBurnGoal,
+    TError,
+    { data: { value: number } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<CalorieBurnGoal, TError, { data: { value: number } }, TContext> {
+  const mutationOptions = getSetCalorieBurnGoalMutationOptions(options);
   return useMutation(mutationOptions);
 }
