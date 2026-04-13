@@ -12,7 +12,10 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 const CARDIO_EXERCISES = new Set(["Walking - Treadmill", "Running - Treadmill"]);
 
