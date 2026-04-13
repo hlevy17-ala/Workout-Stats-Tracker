@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useGetWorkoutsByExercise, useGetExerciseList } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,10 +13,11 @@ export function ExerciseProgress() {
   
   const { data: allWorkouts = [], isLoading: isLoadingWorkouts } = useGetWorkoutsByExercise();
 
-  // Initialize with first exercise once loaded if none selected
-  if (exercises.length > 0 && !selectedExercise && !isLoadingList) {
-    setSelectedExercise(exercises[0]);
-  }
+  useEffect(() => {
+    if (exercises.length > 0 && !selectedExercise) {
+      setSelectedExercise(exercises[0]);
+    }
+  }, [exercises, selectedExercise]);
 
   const chartData = useMemo(() => {
     if (!selectedExercise || !allWorkouts.length) return [];

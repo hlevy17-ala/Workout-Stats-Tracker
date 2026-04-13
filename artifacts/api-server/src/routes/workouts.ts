@@ -99,6 +99,7 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
 
   let inserted = 0;
   let skipped = 0;
+  let errors = 0;
 
   for (const row of toInsert) {
     try {
@@ -113,12 +114,18 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
       } else {
         skipped++;
       }
-    } catch {
-      skipped++;
+    } catch (err) {
+      errors++;
+      req.log.warn({ err, row }, "Failed to insert workout set row");
     }
   }
 
-  req.log.info({ inserted, skipped, total: toInsert.length }, "Workout CSV upload complete");
+  if (errors > 0) {
+    req.log.error({ inserted, skipped, errors, total: toInsert.length }, "Workout CSV upload completed with errors");
+  } else {
+    req.log.info({ inserted, skipped, total: toInsert.length }, "Workout CSV upload complete");
+  }
+
   res.json(UploadWorkoutCsvResponse.parse({ inserted, skipped, total: toInsert.length }));
 });
 
