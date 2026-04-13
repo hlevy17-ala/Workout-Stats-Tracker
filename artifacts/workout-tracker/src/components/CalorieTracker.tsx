@@ -105,18 +105,18 @@ export function CalorieTracker() {
       </div>
 
       <Card className="border-primary/20 bg-primary/5">
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Log Entry</CardTitle>
-          <CardDescription>Enter your calories consumed and burned for a given day. Re-entering the same date will overwrite the previous entry.</CardDescription>
+          <CardDescription>Enter your calories for a given day. Re-entering the same date will update the existing entry.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-4 items-end">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-sm mx-auto space-y-4">
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col flex-1">
+                  <FormItem className="flex flex-col">
                     <FormLabel>Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -145,49 +145,51 @@ export function CalorieTracker() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="caloriesConsumed"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Calories Consumed</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="1"
-                        placeholder="e.g. 2200"
-                        className="bg-background"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="caloriesConsumed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Consumed (kcal)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="2200"
+                          className="bg-background"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="caloriesBurned"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Calories Burned</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="1"
-                        placeholder="e.g. 400"
-                        className="bg-background"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="caloriesBurned"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Burned (kcal)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="400"
+                          className="bg-background"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <Button type="submit" disabled={createLog.isPending} className="w-full sm:w-auto">
+              <Button type="submit" disabled={createLog.isPending} className="w-full">
                 {createLog.isPending ? "Saving..." : "Save Entry"}
               </Button>
             </form>

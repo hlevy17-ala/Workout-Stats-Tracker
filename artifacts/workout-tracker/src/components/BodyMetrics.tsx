@@ -74,18 +74,18 @@ export function BodyMetrics() {
       </div>
 
       <Card className="border-primary/20 bg-primary/5">
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Log Entry</CardTitle>
-          <CardDescription>Record your weight and waist measurements for today.</CardDescription>
+          <CardDescription>Record your weight and waist measurements. Re-entering the same date will update the existing entry.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-4 items-end">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-sm mx-auto space-y-4">
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col flex-1">
+                  <FormItem className="flex flex-col">
                     <FormLabel>Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -114,35 +114,37 @@ export function BodyMetrics() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="weightLbs"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Weight (lbs)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g. 185.5" className="bg-background" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="weightLbs"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Weight (lbs)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" placeholder="185.5" className="bg-background" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="waistInches"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Waist (inches)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g. 32.5" className="bg-background" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="waistInches"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Waist (inches)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" placeholder="32.5" className="bg-background" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <Button type="submit" disabled={createMetric.isPending} className="w-full sm:w-auto">
+              <Button type="submit" disabled={createMetric.isPending} className="w-full">
                 {createMetric.isPending ? "Saving..." : "Save Entry"}
               </Button>
             </form>

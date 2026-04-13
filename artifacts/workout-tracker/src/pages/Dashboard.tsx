@@ -13,7 +13,7 @@ export default function Dashboard() {
         <div className="max-w-5xl mx-auto w-full px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-chart-1" />
-            <span className="font-sans font-bold text-lg tracking-tight uppercase">Forge Journal</span>
+            <span className="font-sans font-bold text-lg tracking-tight uppercase">Harry's Lifestyle Tracker</span>
           </div>
         </div>
       </header>
