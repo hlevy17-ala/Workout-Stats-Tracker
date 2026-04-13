@@ -14,3 +14,76 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Parse and store workout data from a CSV export. Skips cardio and warmup rows. Duplicate sets are ignored.
+ * @summary Upload workout CSV
+ */
+export const UploadWorkoutCsvBody = zod.object({
+  file: zod.instanceof(File),
+});
+
+export const UploadWorkoutCsvResponse = zod.object({
+  inserted: zod.number().describe("Number of new rows inserted"),
+  skipped: zod.number().describe("Number of duplicate rows skipped"),
+  total: zod.number().describe("Total rows parsed (excluding cardio\/warmup)"),
+});
+
+/**
+ * Returns total weight lifted (kg) per exercise grouped by workout date
+ * @summary Get total weight by exercise over time
+ */
+export const GetWorkoutsByExerciseResponseItem = zod.object({
+  date: zod.string().describe("Workout date (YYYY-MM-DD)"),
+  exercise: zod.string().describe("Exercise name"),
+  totalKg: zod
+    .number()
+    .describe("Total weight lifted in kg for this exercise on this date"),
+});
+export const GetWorkoutsByExerciseResponse = zod.array(
+  GetWorkoutsByExerciseResponseItem,
+);
+
+/**
+ * Returns total weight lifted (kg) per muscle group grouped by workout date
+ * @summary Get total weight by muscle group over time
+ */
+export const GetWorkoutsByMuscleGroupResponseItem = zod.object({
+  date: zod.string().describe("Workout date (YYYY-MM-DD)"),
+  muscleGroup: zod.string().describe("Muscle group name"),
+  totalKg: zod
+    .number()
+    .describe("Total weight lifted in kg for this muscle group on this date"),
+});
+export const GetWorkoutsByMuscleGroupResponse = zod.array(
+  GetWorkoutsByMuscleGroupResponseItem,
+);
+
+/**
+ * Returns distinct exercise names from all stored workout data
+ * @summary Get list of all exercises
+ */
+export const GetExerciseListResponseItem = zod.string();
+export const GetExerciseListResponse = zod.array(GetExerciseListResponseItem);
+
+/**
+ * Returns all body metric entries ordered by date ascending
+ * @summary Get all body metric entries
+ */
+export const GetBodyMetricsResponseItem = zod.object({
+  id: zod.number(),
+  date: zod.string().describe("Date (YYYY-MM-DD)"),
+  weightLbs: zod.number().nullable().describe("Body weight in lbs"),
+  waistInches: zod.number().nullable().describe("Waist measurement in inches"),
+});
+export const GetBodyMetricsResponse = zod.array(GetBodyMetricsResponseItem);
+
+/**
+ * Insert or update a body metric entry for the given date
+ * @summary Log a body metric entry
+ */
+export const CreateBodyMetricBody = zod.object({
+  date: zod.string().describe("Date (YYYY-MM-DD)"),
+  weightLbs: zod.number().nullish().describe("Body weight in lbs"),
+  waistInches: zod.number().nullish().describe("Waist measurement in inches"),
+});

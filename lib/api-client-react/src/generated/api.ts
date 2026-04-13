@@ -5,18 +5,30 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  BodyMetric,
+  CreateBodyMetricBody,
+  ErrorResponse,
+  ExerciseDataPoint,
+  HealthStatus,
+  MuscleGroupDataPoint,
+  UploadResult,
+  UploadWorkoutCsvBody,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +111,484 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Parse and store workout data from a CSV export. Skips cardio and warmup rows. Duplicate sets are ignored.
+ * @summary Upload workout CSV
+ */
+export const getUploadWorkoutCsvUrl = () => {
+  return `/api/workouts/upload`;
+};
+
+export const uploadWorkoutCsv = async (
+  uploadWorkoutCsvBody: UploadWorkoutCsvBody,
+  options?: RequestInit,
+): Promise<UploadResult> => {
+  const formData = new FormData();
+  formData.append(`file`, uploadWorkoutCsvBody.file);
+
+  return customFetch<UploadResult>(getUploadWorkoutCsvUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export const getUploadWorkoutCsvMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadWorkoutCsv>>,
+    TError,
+    { data: BodyType<UploadWorkoutCsvBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadWorkoutCsv>>,
+  TError,
+  { data: BodyType<UploadWorkoutCsvBody> },
+  TContext
+> => {
+  const mutationKey = ["uploadWorkoutCsv"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadWorkoutCsv>>,
+    { data: BodyType<UploadWorkoutCsvBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return uploadWorkoutCsv(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadWorkoutCsvMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadWorkoutCsv>>
+>;
+export type UploadWorkoutCsvMutationBody = BodyType<UploadWorkoutCsvBody>;
+export type UploadWorkoutCsvMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Upload workout CSV
+ */
+export const useUploadWorkoutCsv = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadWorkoutCsv>>,
+    TError,
+    { data: BodyType<UploadWorkoutCsvBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof uploadWorkoutCsv>>,
+  TError,
+  { data: BodyType<UploadWorkoutCsvBody> },
+  TContext
+> => {
+  return useMutation(getUploadWorkoutCsvMutationOptions(options));
+};
+
+/**
+ * Returns total weight lifted (kg) per exercise grouped by workout date
+ * @summary Get total weight by exercise over time
+ */
+export const getGetWorkoutsByExerciseUrl = () => {
+  return `/api/workouts/by-exercise`;
+};
+
+export const getWorkoutsByExercise = async (
+  options?: RequestInit,
+): Promise<ExerciseDataPoint[]> => {
+  return customFetch<ExerciseDataPoint[]>(getGetWorkoutsByExerciseUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWorkoutsByExerciseQueryKey = () => {
+  return [`/api/workouts/by-exercise`] as const;
+};
+
+export const getGetWorkoutsByExerciseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWorkoutsByExercise>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getWorkoutsByExercise>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetWorkoutsByExerciseQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWorkoutsByExercise>>
+  > = ({ signal }) => getWorkoutsByExercise({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWorkoutsByExercise>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWorkoutsByExerciseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWorkoutsByExercise>>
+>;
+export type GetWorkoutsByExerciseQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get total weight by exercise over time
+ */
+
+export function useGetWorkoutsByExercise<
+  TData = Awaited<ReturnType<typeof getWorkoutsByExercise>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getWorkoutsByExercise>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWorkoutsByExerciseQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns total weight lifted (kg) per muscle group grouped by workout date
+ * @summary Get total weight by muscle group over time
+ */
+export const getGetWorkoutsByMuscleGroupUrl = () => {
+  return `/api/workouts/by-muscle-group`;
+};
+
+export const getWorkoutsByMuscleGroup = async (
+  options?: RequestInit,
+): Promise<MuscleGroupDataPoint[]> => {
+  return customFetch<MuscleGroupDataPoint[]>(getGetWorkoutsByMuscleGroupUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWorkoutsByMuscleGroupQueryKey = () => {
+  return [`/api/workouts/by-muscle-group`] as const;
+};
+
+export const getGetWorkoutsByMuscleGroupQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetWorkoutsByMuscleGroupQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>
+  > = ({ signal }) => getWorkoutsByMuscleGroup({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWorkoutsByMuscleGroupQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>
+>;
+export type GetWorkoutsByMuscleGroupQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get total weight by muscle group over time
+ */
+
+export function useGetWorkoutsByMuscleGroup<
+  TData = Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWorkoutsByMuscleGroupQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns distinct exercise names from all stored workout data
+ * @summary Get list of all exercises
+ */
+export const getGetExerciseListUrl = () => {
+  return `/api/workouts/exercises`;
+};
+
+export const getExerciseList = async (
+  options?: RequestInit,
+): Promise<string[]> => {
+  return customFetch<string[]>(getGetExerciseListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetExerciseListQueryKey = () => {
+  return [`/api/workouts/exercises`] as const;
+};
+
+export const getGetExerciseListQueryOptions = <
+  TData = Awaited<ReturnType<typeof getExerciseList>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getExerciseList>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetExerciseListQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getExerciseList>>> = ({
+    signal,
+  }) => getExerciseList({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getExerciseList>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetExerciseListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getExerciseList>>
+>;
+export type GetExerciseListQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get list of all exercises
+ */
+
+export function useGetExerciseList<
+  TData = Awaited<ReturnType<typeof getExerciseList>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getExerciseList>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetExerciseListQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns all body metric entries ordered by date ascending
+ * @summary Get all body metric entries
+ */
+export const getGetBodyMetricsUrl = () => {
+  return `/api/body-metrics`;
+};
+
+export const getBodyMetrics = async (
+  options?: RequestInit,
+): Promise<BodyMetric[]> => {
+  return customFetch<BodyMetric[]>(getGetBodyMetricsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetBodyMetricsQueryKey = () => {
+  return [`/api/body-metrics`] as const;
+};
+
+export const getGetBodyMetricsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBodyMetrics>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getBodyMetrics>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetBodyMetricsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getBodyMetrics>>> = ({
+    signal,
+  }) => getBodyMetrics({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBodyMetrics>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBodyMetricsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBodyMetrics>>
+>;
+export type GetBodyMetricsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get all body metric entries
+ */
+
+export function useGetBodyMetrics<
+  TData = Awaited<ReturnType<typeof getBodyMetrics>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getBodyMetrics>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBodyMetricsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Insert or update a body metric entry for the given date
+ * @summary Log a body metric entry
+ */
+export const getCreateBodyMetricUrl = () => {
+  return `/api/body-metrics`;
+};
+
+export const createBodyMetric = async (
+  createBodyMetricBody: CreateBodyMetricBody,
+  options?: RequestInit,
+): Promise<BodyMetric> => {
+  return customFetch<BodyMetric>(getCreateBodyMetricUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createBodyMetricBody),
+  });
+};
+
+export const getCreateBodyMetricMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBodyMetric>>,
+    TError,
+    { data: BodyType<CreateBodyMetricBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createBodyMetric>>,
+  TError,
+  { data: BodyType<CreateBodyMetricBody> },
+  TContext
+> => {
+  const mutationKey = ["createBodyMetric"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createBodyMetric>>,
+    { data: BodyType<CreateBodyMetricBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createBodyMetric(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateBodyMetricMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createBodyMetric>>
+>;
+export type CreateBodyMetricMutationBody = BodyType<CreateBodyMetricBody>;
+export type CreateBodyMetricMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Log a body metric entry
+ */
+export const useCreateBodyMetric = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBodyMetric>>,
+    TError,
+    { data: BodyType<CreateBodyMetricBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createBodyMetric>>,
+  TError,
+  { data: BodyType<CreateBodyMetricBody> },
+  TContext
+> => {
+  return useMutation(getCreateBodyMetricMutationOptions(options));
+};

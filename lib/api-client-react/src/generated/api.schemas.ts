@@ -8,3 +8,69 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface UploadResult {
+  /** Number of new rows inserted */
+  inserted: number;
+  /** Number of duplicate rows skipped */
+  skipped: number;
+  /** Total rows parsed (excluding cardio/warmup) */
+  total: number;
+}
+
+export interface ExerciseDataPoint {
+  /** Workout date (YYYY-MM-DD) */
+  date: string;
+  /** Exercise name */
+  exercise: string;
+  /** Total weight lifted in kg for this exercise on this date */
+  totalKg: number;
+}
+
+export interface MuscleGroupDataPoint {
+  /** Workout date (YYYY-MM-DD) */
+  date: string;
+  /** Muscle group name */
+  muscleGroup: string;
+  /** Total weight lifted in kg for this muscle group on this date */
+  totalKg: number;
+}
+
+export interface BodyMetric {
+  id: number;
+  /** Date (YYYY-MM-DD) */
+  date: string;
+  /**
+   * Body weight in lbs
+   * @nullable
+   */
+  weightLbs: number | null;
+  /**
+   * Waist measurement in inches
+   * @nullable
+   */
+  waistInches: number | null;
+}
+
+export interface CreateBodyMetricBody {
+  /** Date (YYYY-MM-DD) */
+  date: string;
+  /**
+   * Body weight in lbs
+   * @nullable
+   */
+  weightLbs?: number | null;
+  /**
+   * Waist measurement in inches
+   * @nullable
+   */
+  waistInches?: number | null;
+}
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export type UploadWorkoutCsvBody = {
+  file: Blob;
+};

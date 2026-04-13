@@ -6,4 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./bodyMetric";
+export * from "./createBodyMetricBody";
+export * from "./errorResponse";
+export * from "./exerciseDataPoint";
 export * from "./healthStatus";
+export * from "./muscleGroupDataPoint";
+export * from "./uploadResult";
+export * from "./uploadWorkoutCsvBody";

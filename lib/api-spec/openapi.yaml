@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: workouts
+    description: Workout data operations
+  - name: bodyMetrics
+    description: Body metrics operations
 paths:
   /healthz:
     get:
@@ -24,6 +28,127 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /workouts/upload:
+    post:
+      operationId: uploadWorkoutCsv
+      tags: [workouts]
+      summary: Upload workout CSV
+      description: Parse and store workout data from a CSV export. Skips cardio and warmup rows. Duplicate sets are ignored.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        "200":
+          description: Upload result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /workouts/by-exercise:
+    get:
+      operationId: getWorkoutsByExercise
+      tags: [workouts]
+      summary: Get total weight by exercise over time
+      description: Returns total weight lifted (kg) per exercise grouped by workout date
+      responses:
+        "200":
+          description: Exercise progress data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExerciseDataPoint"
+
+  /workouts/by-muscle-group:
+    get:
+      operationId: getWorkoutsByMuscleGroup
+      tags: [workouts]
+      summary: Get total weight by muscle group over time
+      description: Returns total weight lifted (kg) per muscle group grouped by workout date
+      responses:
+        "200":
+          description: Muscle group progress data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MuscleGroupDataPoint"
+
+  /workouts/exercises:
+    get:
+      operationId: getExerciseList
+      tags: [workouts]
+      summary: Get list of all exercises
+      description: Returns distinct exercise names from all stored workout data
+      responses:
+        "200":
+          description: List of exercises
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /body-metrics:
+    get:
+      operationId: getBodyMetrics
+      tags: [bodyMetrics]
+      summary: Get all body metric entries
+      description: Returns all body metric entries ordered by date ascending
+      responses:
+        "200":
+          description: Body metrics list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BodyMetric"
+    post:
+      operationId: createBodyMetric
+      tags: [bodyMetrics]
+      summary: Log a body metric entry
+      description: Insert or update a body metric entry for the given date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBodyMetricBody"
+      responses:
+        "201":
+          description: Created body metric
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BodyMetric"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +159,96 @@ components:
       required:
         - status
 
+    UploadResult:
+      type: object
+      properties:
+        inserted:
+          type: integer
+          description: Number of new rows inserted
+        skipped:
+          type: integer
+          description: Number of duplicate rows skipped
+        total:
+          type: integer
+          description: Total rows parsed (excluding cardio/warmup)
+      required:
+        - inserted
+        - skipped
+        - total
+
+    ExerciseDataPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Workout date (YYYY-MM-DD)
+        exercise:
+          type: string
+          description: Exercise name
+        totalKg:
+          type: number
+          description: Total weight lifted in kg for this exercise on this date
+      required:
+        - date
+        - exercise
+        - totalKg
+
+    MuscleGroupDataPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Workout date (YYYY-MM-DD)
+        muscleGroup:
+          type: string
+          description: Muscle group name
+        totalKg:
+          type: number
+          description: Total weight lifted in kg for this muscle group on this date
+      required:
+        - date
+        - muscleGroup
+        - totalKg
+
+    BodyMetric:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          description: Date (YYYY-MM-DD)
+        weightLbs:
+          type: ["number", "null"]
+          description: Body weight in lbs
+        waistInches:
+          type: ["number", "null"]
+          description: Waist measurement in inches
+      required:
+        - id
+        - date
+        - weightLbs
+        - waistInches
+
+    CreateBodyMetricBody:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Date (YYYY-MM-DD)
+        weightLbs:
+          type: ["number", "null"]
+          description: Body weight in lbs
+        waistInches:
+          type: ["number", "null"]
+          description: Waist measurement in inches
+      required:
+        - date
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
