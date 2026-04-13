@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useGetWorkoutsByMuscleGroup, useGetAvgWeightByMuscleGroup } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Weight, TrendingUp } from "lucide-react";
 
@@ -23,6 +23,29 @@ type ChartRow = { date: string } & Record<string, string | number>;
 export function MuscleGroupProgress() {
   const { data: rawVolume = [], isLoading: isLoadingVolume } = useGetWorkoutsByMuscleGroup();
   const { data: rawAvg = [], isLoading: isLoadingAvg } = useGetAvgWeightByMuscleGroup();
+
+  const [activeGroups, setActiveGroups] = useState<Set<string>>(new Set(MUSCLE_GROUPS));
+
+  const toggleGroup = useCallback((mg: string) => {
+    setActiveGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(mg)) {
+        if (next.size === 1) return prev;
+        next.delete(mg);
+      } else {
+        next.add(mg);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectOnly = useCallback((mg: string) => {
+    setActiveGroups(new Set([mg]));
+  }, []);
+
+  const selectAll = useCallback(() => {
+    setActiveGroups(new Set(MUSCLE_GROUPS));
+  }, []);
 
   const volumeData = useMemo((): ChartRow[] => {
     if (!rawVolume.length) return [];
@@ -75,6 +98,58 @@ export function MuscleGroupProgress() {
   }
 
   const isEmpty = volumeData.length === 0;
+  const allActive = activeGroups.size === MUSCLE_GROUPS.length;
+
+  const FilterLegend = () => (
+    <div className="flex flex-wrap gap-2 px-6 pb-4 pt-2">
+      {MUSCLE_GROUPS.map((mg, i) => {
+        const isActive = activeGroups.has(mg);
+        return (
+          <button
+            key={mg}
+            onClick={() => toggleGroup(mg)}
+            onDoubleClick={() => selectOnly(mg)}
+            title="Click to toggle · Double-click to isolate"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+            style={{
+              borderColor: COLORS[i],
+              backgroundColor: isActive ? COLORS[i] + "33" : "transparent",
+              color: isActive ? COLORS[i] : "hsl(var(--muted-foreground))",
+              opacity: isActive ? 1 : 0.45,
+            }}
+          >
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: isActive ? COLORS[i] : "hsl(var(--muted-foreground))" }}
+            />
+            {mg}
+          </button>
+        );
+      })}
+      {!allActive && (
+        <button
+          onClick={selectAll}
+          className="px-3 py-1 rounded-full text-xs font-semibold border border-border text-muted-foreground hover:text-foreground transition-all"
+        >
+          Show all
+        </button>
+      )}
+    </div>
+  );
+
+  const sharedLines = MUSCLE_GROUPS.map((mg, i) => (
+    <Line
+      key={mg}
+      type="monotone"
+      dataKey={mg}
+      name={mg}
+      stroke={COLORS[i % COLORS.length]}
+      strokeWidth={activeGroups.has(mg) ? 2.5 : 0}
+      dot={false}
+      activeDot={activeGroups.has(mg) ? { r: 5, strokeWidth: 0 } : false}
+      connectNulls
+    />
+  ));
 
   return (
     <div className="space-y-6">
@@ -97,10 +172,13 @@ export function MuscleGroupProgress() {
                 <Weight className="w-5 h-5 text-chart-2" />
                 Average Weight per Set
               </CardTitle>
-              <CardDescription>Average weight lifted per set (lbs) per muscle group over time.</CardDescription>
+              <CardDescription>
+                Average weight lifted per set (lbs) per muscle group. Click a group to toggle · double-click to isolate.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="h-[380px] w-full">
+            <FilterLegend />
+            <CardContent className="pt-2">
+              <div className="h-[340px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={avgWeightData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -108,22 +186,11 @@ export function MuscleGroupProgress() {
                     <YAxis dx={-10} tickFormatter={(val) => `${val}lbs`} {...axisStyle} />
                     <Tooltip
                       {...tooltipStyle}
-                      formatter={(value: number, name: string) => [`${value} lbs`, name]}
+                      formatter={(value: number, name: string) =>
+                        activeGroups.has(name) ? [`${value} lbs`, name] : []
+                      }
                     />
-                    <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="circle" />
-                    {MUSCLE_GROUPS.map((mg, i) => (
-                      <Line
-                        key={mg}
-                        type="monotone"
-                        dataKey={mg}
-                        name={mg}
-                        stroke={COLORS[i % COLORS.length]}
-                        strokeWidth={2}
-                        dot={false}
-                        activeDot={{ r: 5, strokeWidth: 0 }}
-                        connectNulls
-                      />
-                    ))}
+                    {sharedLines}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -136,10 +203,13 @@ export function MuscleGroupProgress() {
                 <TrendingUp className="w-5 h-5 text-chart-1" />
                 Regional Volume History
               </CardTitle>
-              <CardDescription>Total pounds lifted per session, separated by muscle group.</CardDescription>
+              <CardDescription>
+                Total pounds lifted per session by muscle group. Same filter applies.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="h-[380px] w-full">
+            <FilterLegend />
+            <CardContent className="pt-2">
+              <div className="h-[340px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={volumeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -147,22 +217,11 @@ export function MuscleGroupProgress() {
                     <YAxis dx={-10} tickFormatter={(val) => `${val}lbs`} {...axisStyle} />
                     <Tooltip
                       {...tooltipStyle}
-                      formatter={(value: number, name: string) => [`${value} lbs`, name]}
+                      formatter={(value: number, name: string) =>
+                        activeGroups.has(name) ? [`${value} lbs`, name] : []
+                      }
                     />
-                    <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="circle" />
-                    {MUSCLE_GROUPS.map((mg, i) => (
-                      <Line
-                        key={mg}
-                        type="monotone"
-                        dataKey={mg}
-                        name={mg}
-                        stroke={COLORS[i % COLORS.length]}
-                        strokeWidth={2}
-                        dot={false}
-                        activeDot={{ r: 5, strokeWidth: 0 }}
-                        connectNulls
-                      />
-                    ))}
+                    {sharedLines}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
