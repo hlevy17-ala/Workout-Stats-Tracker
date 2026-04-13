@@ -7,5 +7,5 @@
  */
 
 export type UploadWorkoutCsvBody = {
-  file: Blob;
+  file: unknown;
 };

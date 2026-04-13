@@ -20,7 +20,7 @@ export const HealthCheckResponse = zod.object({
  * @summary Upload workout CSV
  */
 export const UploadWorkoutCsvBody = zod.object({
-  file: zod.instanceof(File),
+  file: zod.any(),
 });
 
 export const UploadWorkoutCsvResponse = zod.object({
