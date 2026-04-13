@@ -87,3 +87,25 @@ export const CreateBodyMetricBody = zod.object({
   weightLbs: zod.number().nullish().describe("Body weight in lbs"),
   waistInches: zod.number().nullish().describe("Waist measurement in inches"),
 });
+
+/**
+ * Returns all calorie log entries ordered by date ascending
+ * @summary Get all calorie log entries
+ */
+export const GetCalorieLogsResponseItem = zod.object({
+  id: zod.number(),
+  date: zod.string().describe("Date (YYYY-MM-DD)"),
+  caloriesConsumed: zod.number().nullable().describe("Calories consumed"),
+  caloriesBurned: zod.number().nullable().describe("Calories burned from exercise"),
+});
+export const GetCalorieLogsResponse = zod.array(GetCalorieLogsResponseItem);
+
+/**
+ * Insert or update a calorie log entry for the given date
+ * @summary Log calorie data
+ */
+export const CreateCalorieLogBody = zod.object({
+  date: zod.string().describe("Date (YYYY-MM-DD)"),
+  caloriesConsumed: zod.number().nullish().describe("Calories consumed"),
+  caloriesBurned: zod.number().nullish().describe("Calories burned from exercise"),
+});

@@ -67,6 +67,23 @@ export interface CreateBodyMetricBody {
   waistInches?: number | null;
 }
 
+export interface CalorieLog {
+  id: number;
+  /** Date (YYYY-MM-DD) */
+  date: string;
+  /** Calories consumed */
+  caloriesConsumed: number | null;
+  /** Calories burned from exercise */
+  caloriesBurned: number | null;
+}
+
+export interface CreateCalorieLogBody {
+  /** Date (YYYY-MM-DD) */
+  date: string;
+  caloriesConsumed?: number | null;
+  caloriesBurned?: number | null;
+}
+
 export interface ErrorResponse {
   error: string;
 }

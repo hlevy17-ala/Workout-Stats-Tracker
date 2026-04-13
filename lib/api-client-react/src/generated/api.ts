@@ -18,7 +18,9 @@ import type {
 
 import type {
   BodyMetric,
+  CalorieLog,
   CreateBodyMetricBody,
+  CreateCalorieLogBody,
   ErrorResponse,
   ExerciseDataPoint,
   HealthStatus,
@@ -591,4 +593,147 @@ export const useCreateBodyMetric = <
   TContext
 > => {
   return useMutation(getCreateBodyMetricMutationOptions(options));
+};
+
+export const getGetCalorieLogsUrl = () => {
+  return `/api/calorie-logs`;
+};
+
+export const getCalorieLogs = async (
+  options?: RequestInit,
+): Promise<CalorieLog[]> => {
+  return customFetch<CalorieLog[]>(getGetCalorieLogsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCalorieLogsQueryKey = () => {
+  return [`/api/calorie-logs`] as const;
+};
+
+export const getGetCalorieLogsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCalorieLogs>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCalorieLogs>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetCalorieLogsQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCalorieLogs>>> = ({
+    signal,
+  }) => getCalorieLogs({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCalorieLogs>>,
+    TError,
+    TData
+  >;
+};
+
+export type GetCalorieLogsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCalorieLogs>>
+>;
+export type GetCalorieLogsQueryError = ErrorType<unknown>;
+
+export function useGetCalorieLogs<
+  TData = Awaited<ReturnType<typeof getCalorieLogs>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCalorieLogs>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCalorieLogsQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+export const getCreateCalorieLogUrl = () => {
+  return `/api/calorie-logs`;
+};
+
+export const createCalorieLog = async (
+  createCalorieLogBody: BodyType<CreateCalorieLogBody>,
+  options?: RequestInit,
+): Promise<CalorieLog> => {
+  return customFetch<CalorieLog>(getCreateCalorieLogUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCalorieLogBody),
+  });
+};
+
+export const getCreateCalorieLogMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCalorieLog>>,
+    TError,
+    { data: BodyType<CreateCalorieLogBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCalorieLog>>,
+  TError,
+  { data: BodyType<CreateCalorieLogBody> },
+  TContext
+> => {
+  const mutationKey = ["createCalorieLog"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCalorieLog>>,
+    { data: BodyType<CreateCalorieLogBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+    return createCalorieLog(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCalorieLogMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createCalorieLog>>
+>;
+export type CreateCalorieLogMutationBody = BodyType<CreateCalorieLogBody>;
+export type CreateCalorieLogMutationError = ErrorType<ErrorResponse>;
+
+export const useCreateCalorieLog = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCalorieLog>>,
+    TError,
+    { data: BodyType<CreateCalorieLogBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createCalorieLog>>,
+  TError,
+  { data: BodyType<CreateCalorieLogBody> },
+  TContext
+> => {
+  return useMutation(getCreateCalorieLogMutationOptions(options));
 };

@@ -1,9 +1,10 @@
-import { Dumbbell, Activity, Scale, Upload, Shield } from "lucide-react";
+import { Dumbbell, Activity, Scale, Upload, Shield, Flame } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CsvUpload } from "@/components/CsvUpload";
 import { ExerciseProgress } from "@/components/ExerciseProgress";
 import { MuscleGroupProgress } from "@/components/MuscleGroupProgress";
 import { BodyMetrics } from "@/components/BodyMetrics";
+import { CalorieTracker } from "@/components/CalorieTracker";
 
 export default function Dashboard() {
   return (
@@ -19,7 +20,7 @@ export default function Dashboard() {
 
       <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-8 space-y-8">
         <Tabs defaultValue="exercises" className="w-full">
-          <TabsList className="grid grid-cols-4 w-full h-auto p-1 bg-muted/50 rounded-xl">
+          <TabsList className="grid grid-cols-5 w-full h-auto p-1 bg-muted/50 rounded-xl">
             <TabsTrigger value="exercises" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
               <Dumbbell className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Movements</span>
@@ -31,6 +32,10 @@ export default function Dashboard() {
             <TabsTrigger value="metrics" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
               <Scale className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Biometrics</span>
+            </TabsTrigger>
+            <TabsTrigger value="nutrition" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
+              <Flame className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Nutrition</span>
             </TabsTrigger>
             <TabsTrigger value="upload" className="py-3 data-[state=active]:bg-card rounded-lg data-[state=active]:shadow-sm">
               <Upload className="w-4 h-4 mr-2" />
@@ -49,6 +54,10 @@ export default function Dashboard() {
             
             <TabsContent value="metrics" className="animate-in fade-in-50 zoom-in-95 duration-200">
               <BodyMetrics />
+            </TabsContent>
+
+            <TabsContent value="nutrition" className="animate-in fade-in-50 zoom-in-95 duration-200">
+              <CalorieTracker />
             </TabsContent>
 
             <TabsContent value="upload" className="animate-in fade-in-50 zoom-in-95 duration-200">

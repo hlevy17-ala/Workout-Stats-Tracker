@@ -30,11 +30,12 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ### Workout Tracker (`artifacts/workout-tracker`)
 - React + Vite frontend at `/`
 - Personal fitness tracking dashboard called "Forge Journal"
-- Tabs: Movements (exercise progress), Systemic (muscle group progress), Biometrics, Import (CSV upload)
+- Tabs: Movements (exercise progress in lbs), Systemic (muscle group progress in lbs), Biometrics, Nutrition (calorie tracking), Import (CSV upload)
+- Note: CSV weight data is stored in kg internally; all chart displays convert to lbs (× 2.20462)
 
 ### API Server (`artifacts/api-server`)
 - Express 5 backend at `/api`
-- Routes: `/api/workouts/upload`, `/api/workouts/by-exercise`, `/api/workouts/by-muscle-group`, `/api/workouts/exercises`, `/api/body-metrics`
+- Routes: `/api/workouts/upload`, `/api/workouts/by-exercise`, `/api/workouts/by-muscle-group`, `/api/workouts/exercises`, `/api/body-metrics`, `/api/calorie-logs`
 
 ## Database Schema
 
@@ -44,6 +45,10 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ### body_metrics
 - id, date (date, unique), weight_lbs (numeric nullable), waist_inches (numeric nullable)
+
+### calorie_logs
+- id, date (date, unique), calories_consumed (integer nullable), calories_burned (integer nullable)
+- Upsert by date; deficit = calories_burned - calories_consumed
 
 ## Exercise → Muscle Group Mapping
 

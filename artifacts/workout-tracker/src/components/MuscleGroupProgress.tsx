@@ -23,12 +23,13 @@ export function MuscleGroupProgress() {
   const chartData = useMemo(() => {
     if (!rawData.length) return [];
 
+    const KG_TO_LBS = 2.20462;
     const byDate: Record<string, ChartRow> = {};
     for (const curr of rawData) {
       if (!byDate[curr.date]) {
         byDate[curr.date] = { date: curr.date };
       }
-      byDate[curr.date][curr.muscleGroup] = curr.totalKg;
+      byDate[curr.date][curr.muscleGroup] = Math.round(curr.totalKg * KG_TO_LBS);
     }
 
     return Object.values(byDate).sort(
@@ -57,7 +58,7 @@ export function MuscleGroupProgress() {
         <Card>
           <CardHeader>
             <CardTitle>Regional Volume History</CardTitle>
-            <CardDescription>Aggregate total kilograms lifted per session, separated by group.</CardDescription>
+            <CardDescription>Aggregate total pounds lifted per session, separated by group.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="h-[450px] w-full">
@@ -82,7 +83,7 @@ export function MuscleGroupProgress() {
                     tickLine={false}
                     axisLine={false}
                     dx={-10}
-                    tickFormatter={(val) => `${val}kg`}
+                    tickFormatter={(val) => `${val}lbs`}
                   />
                   <Tooltip 
                     contentStyle={{ 

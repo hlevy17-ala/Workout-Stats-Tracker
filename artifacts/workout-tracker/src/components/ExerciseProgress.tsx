@@ -19,18 +19,19 @@ export function ExerciseProgress() {
     }
   }, [exercises, selectedExercise]);
 
+  const KG_TO_LBS = 2.20462;
+
   const chartData = useMemo(() => {
     if (!selectedExercise || !allWorkouts.length) return [];
-    
-    // Filter and sort by date ascending
     return allWorkouts
       .filter(w => w.exercise === selectedExercise)
+      .map(w => ({ ...w, totalLbs: Math.round(w.totalKg * KG_TO_LBS) }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [allWorkouts, selectedExercise]);
 
   const maxWeight = useMemo(() => {
     if (!chartData.length) return 0;
-    return Math.max(...chartData.map(d => d.totalKg));
+    return Math.max(...chartData.map(d => d.totalLbs));
   }, [chartData]);
 
   if (isLoadingList || isLoadingWorkouts) {
@@ -81,11 +82,11 @@ export function ExerciseProgress() {
                   <TrendingUp className="w-5 h-5 text-chart-1" />
                   {selectedExercise}
                 </CardTitle>
-                <CardDescription>Total volume (kg) over time</CardDescription>
+                <CardDescription>Total volume (lbs) over time</CardDescription>
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground font-mono">Max Volume</p>
-                <p className="text-2xl font-bold text-chart-1 font-mono">{maxWeight.toLocaleString()} kg</p>
+                <p className="text-2xl font-bold text-chart-1 font-mono">{maxWeight.toLocaleString()} lbs</p>
               </div>
             </div>
           </CardHeader>
@@ -118,7 +119,7 @@ export function ExerciseProgress() {
                     tickLine={false}
                     axisLine={false}
                     dx={-10}
-                    tickFormatter={(val) => `${val}kg`}
+                    tickFormatter={(val) => `${val}lbs`}
                   />
                   <Tooltip 
                     contentStyle={{ 
@@ -128,11 +129,11 @@ export function ExerciseProgress() {
                       color: 'hsl(var(--foreground))'
                     }}
                     labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: 4 }}
-                    formatter={(value: number) => [`${value} kg`, 'Total Volume']}
+                    formatter={(value: number) => [`${value} lbs`, 'Total Volume']}
                   />
                   <Area 
                     type="monotone" 
-                    dataKey="totalKg" 
+                    dataKey="totalLbs" 
                     stroke="hsl(var(--chart-1))" 
                     strokeWidth={3}
                     fillOpacity={1} 

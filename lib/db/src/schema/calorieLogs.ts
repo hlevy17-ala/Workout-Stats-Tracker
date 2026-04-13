@@ -1,0 +1,14 @@
+import { pgTable, serial, date, integer } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod/v4";
+
+export const calorieLogsTable = pgTable("calorie_logs", {
+  id: serial("id").primaryKey(),
+  date: date("date", { mode: "string" }).notNull().unique(),
+  caloriesConsumed: integer("calories_consumed"),
+  caloriesBurned: integer("calories_burned"),
+});
+
+export const insertCalorieLogSchema = createInsertSchema(calorieLogsTable).omit({ id: true });
+export type InsertCalorieLog = z.infer<typeof insertCalorieLogSchema>;
+export type CalorieLog = typeof calorieLogsTable.$inferSelect;
