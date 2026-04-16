@@ -129,31 +129,19 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
     });
   }
 
-  await db.delete(workoutSetsTable);
+  const CHUNK_SIZE = 1000;
 
-  let inserted = 0;
-  let skipped = 0;
-  let errors = 0;
-
-  for (const row of toInsert) {
-    try {
-      await db
-        .insert(workoutSetsTable)
-        .values(row);
-      inserted++;
-    } catch (err) {
-      errors++;
-      req.log.warn({ err, row }, "Failed to insert workout set row");
+  await db.transaction(async (tx) => {
+    await tx.delete(workoutSetsTable);
+    for (let i = 0; i < toInsert.length; i += CHUNK_SIZE) {
+      await tx.insert(workoutSetsTable).values(toInsert.slice(i, i + CHUNK_SIZE));
     }
-  }
+  });
 
-  if (errors > 0) {
-    req.log.error({ inserted, skipped, errors, total: toInsert.length }, "Workout CSV upload completed with errors");
-  } else {
-    req.log.info({ inserted, skipped, total: toInsert.length }, "Workout CSV upload complete");
-  }
+  const inserted = toInsert.length;
+  req.log.info({ inserted, total: inserted }, "Workout CSV upload complete");
 
-  res.json(UploadWorkoutCsvResponse.parse({ inserted, skipped, total: toInsert.length }));
+  res.json(UploadWorkoutCsvResponse.parse({ inserted, skipped: 0, total: inserted }));
 });
 
 router.get("/workouts/by-exercise", async (req, res): Promise<void> => {
