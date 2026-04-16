@@ -181,7 +181,7 @@ export function BodyMetrics() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tickFormatter={(val) => `${new Date(val).getMonth()+1}/${new Date(val).getDate()}`} stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                    <XAxis dataKey="date" tickFormatter={(val) => { const [,m,d] = val.split("-"); return `${parseInt(m,10)}/${parseInt(d,10)}`; }} stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
                     <YAxis domain={['auto', 'auto']} stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dx={-5} />
                     <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius-md)' }} />
                     <Area type="monotone" dataKey="weightLbs" stroke="hsl(var(--chart-2))" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" connectNulls />
@@ -207,7 +207,7 @@ export function BodyMetrics() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tickFormatter={(val) => `${new Date(val).getMonth()+1}/${new Date(val).getDate()}`} stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                    <XAxis dataKey="date" tickFormatter={(val) => { const [,m,d] = val.split("-"); return `${parseInt(m,10)}/${parseInt(d,10)}`; }} stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
                     <YAxis domain={['auto', 'auto']} stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dx={-5} />
                     <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius-md)' }} />
                     <Area type="monotone" dataKey="waistInches" stroke="hsl(var(--chart-3))" strokeWidth={3} fillOpacity={1} fill="url(#colorWaist)" connectNulls />

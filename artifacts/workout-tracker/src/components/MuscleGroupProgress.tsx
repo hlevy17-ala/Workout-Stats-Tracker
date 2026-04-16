@@ -72,8 +72,8 @@ export function MuscleGroupProgress() {
   }, [rawAvg]);
 
   const tickFormatter = (val: string) => {
-    const d = new Date(val);
-    return `${d.getMonth() + 1}/${d.getDate()}`;
+    const [, m, d] = val.split("-");
+    return `${parseInt(m, 10)}/${parseInt(d, 10)}`;
   };
 
   const axisStyle = {
