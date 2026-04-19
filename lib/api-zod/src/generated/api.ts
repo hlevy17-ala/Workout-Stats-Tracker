@@ -188,3 +188,26 @@ export const CreateCalorieLogBody = zod.object({
   caloriesConsumed: zod.number().nullish().describe("Calories consumed"),
   caloriesBurned: zod.number().nullish().describe("Calories burned from exercise"),
 });
+
+export const GetWorkoutHeatmapResponseItem = zod.object({
+  date: zod.string().describe("Date in YYYY-MM-DD format"),
+  volumeKg: zod.number().describe("Total volume (reps × weight) in kg"),
+});
+export const GetWorkoutHeatmapResponse = zod.array(GetWorkoutHeatmapResponseItem);
+
+export const GetMostImprovedItem = zod.object({
+  exercise: zod.string(),
+  firstDate: zod.string(),
+  lastDate: zod.string(),
+  firstAvgKg: zod.number(),
+  lastAvgKg: zod.number(),
+  pctGain: zod.number(),
+});
+export const GetMostImprovedResponse = zod.array(GetMostImprovedItem);
+
+export const GetPersonalRecordsTimelineItem = zod.object({
+  exercise: zod.string(),
+  maxWeightKg: zod.number(),
+  prDate: zod.string().describe("Date when PR was set (YYYY-MM-DD)"),
+});
+export const GetPersonalRecordsTimelineResponse = zod.array(GetPersonalRecordsTimelineItem);

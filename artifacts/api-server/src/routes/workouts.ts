@@ -14,6 +14,9 @@ import {
   CreateBodyMetricBody,
   GetCalorieLogsResponse,
   CreateCalorieLogBody,
+  GetWorkoutHeatmapResponse,
+  GetMostImprovedResponse,
+  GetPersonalRecordsTimelineResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -360,6 +363,75 @@ router.get("/workouts/personal-records", async (_req, res): Promise<void> => {
   }));
 
   res.json(GetPersonalRecordsResponse.parse(records));
+});
+
+router.get("/workouts/heatmap", async (_req, res): Promise<void> => {
+  const { rows } = await db.execute<{ date: string; volume_kg: number }>(sql`
+    SELECT
+      date,
+      CAST(SUM(weight_kg::numeric * reps) AS float8) AS volume_kg
+    FROM workout_sets
+    WHERE "date" >= CURRENT_DATE - INTERVAL '112 days'
+    GROUP BY date
+    ORDER BY date
+  `);
+
+  res.json(GetWorkoutHeatmapResponse.parse(rows.map((r) => ({ date: r.date, volumeKg: r.volume_kg }))));
+});
+
+router.get("/workouts/most-improved", async (_req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      date: workoutSetsTable.date,
+      exercise: workoutSetsTable.exercise,
+      avgWeightKg: sql<number>`CAST(AVG(${workoutSetsTable.weightKg}::numeric) AS float8)`,
+    })
+    .from(workoutSetsTable)
+    .groupBy(workoutSetsTable.date, workoutSetsTable.exercise)
+    .orderBy(workoutSetsTable.date);
+
+  const byExercise = new Map<string, { date: string; avgWeightKg: number }[]>();
+  for (const row of rows) {
+    if (!byExercise.has(row.exercise)) byExercise.set(row.exercise, []);
+    byExercise.get(row.exercise)!.push({ date: row.date, avgWeightKg: Number(row.avgWeightKg) });
+  }
+
+  const result: { exercise: string; firstDate: string; lastDate: string; firstAvgKg: number; lastAvgKg: number; pctGain: number }[] = [];
+  for (const [exercise, sessions] of byExercise) {
+    if (sessions.length < 2) continue;
+    const first = sessions[0];
+    const last = sessions[sessions.length - 1];
+    if (first.avgWeightKg <= 0) continue;
+    const pctGain = ((last.avgWeightKg - first.avgWeightKg) / first.avgWeightKg) * 100;
+    result.push({
+      exercise,
+      firstDate: first.date,
+      lastDate: last.date,
+      firstAvgKg: Math.round(first.avgWeightKg * 100) / 100,
+      lastAvgKg: Math.round(last.avgWeightKg * 100) / 100,
+      pctGain: Math.round(pctGain * 10) / 10,
+    });
+  }
+
+  result.sort((a, b) => b.pctGain - a.pctGain);
+  res.json(GetMostImprovedResponse.parse(result.slice(0, 10)));
+});
+
+router.get("/workouts/personal-records-timeline", async (_req, res): Promise<void> => {
+  const { rows } = await db.execute<{ exercise: string; max_weight_kg: number; pr_date: string }>(sql`
+    SELECT DISTINCT ON (exercise)
+      exercise,
+      CAST(weight_kg AS FLOAT8) AS max_weight_kg,
+      date AS pr_date
+    FROM workout_sets
+    ORDER BY exercise, weight_kg::numeric DESC, date DESC
+  `);
+
+  const result = rows
+    .map((r) => ({ exercise: r.exercise, maxWeightKg: r.max_weight_kg, prDate: r.pr_date }))
+    .sort((a, b) => b.prDate.localeCompare(a.prDate));
+
+  res.json(GetPersonalRecordsTimelineResponse.parse(result));
 });
 
 router.post("/calorie-logs", async (req, res): Promise<void> => {

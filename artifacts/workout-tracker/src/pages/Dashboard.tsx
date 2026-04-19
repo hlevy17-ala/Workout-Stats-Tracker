@@ -1,10 +1,11 @@
-import { Dumbbell, Activity, Scale, Upload, Shield, Flame } from "lucide-react";
+import { Dumbbell, Activity, Scale, Upload, Shield, Flame, BarChart2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CsvUpload } from "@/components/CsvUpload";
 import { ExerciseProgress } from "@/components/ExerciseProgress";
 import { MuscleGroupProgress } from "@/components/MuscleGroupProgress";
 import { BodyMetrics } from "@/components/BodyMetrics";
 import { CalorieTracker } from "@/components/CalorieTracker";
+import { InsightsTab } from "@/components/insights/InsightsTab";
 
 export default function Dashboard() {
   return (
@@ -19,8 +20,12 @@ export default function Dashboard() {
       </header>
 
       <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-8 space-y-8">
-        <Tabs defaultValue="exercises" className="w-full">
-          <TabsList className="grid grid-cols-5 w-full h-auto p-1 bg-muted/40 rounded-xl border border-border">
+        <Tabs defaultValue="insights" className="w-full">
+          <TabsList className="grid grid-cols-6 w-full h-auto p-1 bg-muted/40 rounded-xl border border-border">
+            <TabsTrigger value="insights" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
+              <BarChart2 className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Insights</span>
+            </TabsTrigger>
             <TabsTrigger value="exercises" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Dumbbell className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Movements</span>
@@ -42,16 +47,20 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Import</span>
             </TabsTrigger>
           </TabsList>
-          
+
           <div className="mt-8">
+            <TabsContent value="insights" className="animate-in fade-in-50 zoom-in-95 duration-200">
+              <InsightsTab />
+            </TabsContent>
+
             <TabsContent value="exercises" className="animate-in fade-in-50 zoom-in-95 duration-200">
               <ExerciseProgress />
             </TabsContent>
-            
+
             <TabsContent value="muscles" className="animate-in fade-in-50 zoom-in-95 duration-200">
               <MuscleGroupProgress />
             </TabsContent>
-            
+
             <TabsContent value="metrics" className="animate-in fade-in-50 zoom-in-95 duration-200">
               <BodyMetrics />
             </TabsContent>

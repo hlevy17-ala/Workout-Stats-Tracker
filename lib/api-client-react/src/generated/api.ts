@@ -28,10 +28,13 @@ import type {
   ErrorResponse,
   ExerciseDataPoint,
   HealthStatus,
+  MostImprovedData,
   MuscleGroupDataPoint,
   PersonalRecord,
+  PersonalRecordsTimelineData,
   UploadResult,
   UploadWorkoutCsvBody,
+  WorkoutHeatmapData,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1104,4 +1107,79 @@ export function useSetCalorieBurnGoal<
 }): UseMutationResult<CalorieBurnGoal, TError, { data: { value: number } }, TContext> {
   const mutationOptions = getSetCalorieBurnGoalMutationOptions(options);
   return useMutation(mutationOptions);
+}
+
+// ─── Insights hooks ──────────────────────────────────────────────────────────
+
+export const getGetWorkoutHeatmapQueryKey = () => ["/api/workouts/heatmap"] as const;
+
+async function getWorkoutHeatmap(
+  options?: SecondParameter<typeof customFetch>,
+  signal?: AbortSignal,
+): Promise<WorkoutHeatmapData> {
+  return customFetch<WorkoutHeatmapData>(`/api/workouts/heatmap`, { ...options, signal });
+}
+
+export function useGetWorkoutHeatmap<
+  TData = WorkoutHeatmapData,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<WorkoutHeatmapData, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetWorkoutHeatmapQueryKey();
+  const queryFn: QueryFunction<WorkoutHeatmapData> = ({ signal }) =>
+    getWorkoutHeatmap(requestOptions, signal);
+  return useQuery({ queryKey, queryFn, ...queryOptions });
+}
+
+export const getGetMostImprovedQueryKey = () => ["/api/workouts/most-improved"] as const;
+
+async function getMostImproved(
+  options?: SecondParameter<typeof customFetch>,
+  signal?: AbortSignal,
+): Promise<MostImprovedData> {
+  return customFetch<MostImprovedData>(`/api/workouts/most-improved`, { ...options, signal });
+}
+
+export function useGetMostImproved<
+  TData = MostImprovedData,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<MostImprovedData, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetMostImprovedQueryKey();
+  const queryFn: QueryFunction<MostImprovedData> = ({ signal }) =>
+    getMostImproved(requestOptions, signal);
+  return useQuery({ queryKey, queryFn, ...queryOptions });
+}
+
+export const getGetPersonalRecordsTimelineQueryKey = () =>
+  ["/api/workouts/personal-records-timeline"] as const;
+
+async function getPersonalRecordsTimeline(
+  options?: SecondParameter<typeof customFetch>,
+  signal?: AbortSignal,
+): Promise<PersonalRecordsTimelineData> {
+  return customFetch<PersonalRecordsTimelineData>(`/api/workouts/personal-records-timeline`, {
+    ...options,
+    signal,
+  });
+}
+
+export function useGetPersonalRecordsTimeline<
+  TData = PersonalRecordsTimelineData,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<PersonalRecordsTimelineData, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetPersonalRecordsTimelineQueryKey();
+  const queryFn: QueryFunction<PersonalRecordsTimelineData> = ({ signal }) =>
+    getPersonalRecordsTimeline(requestOptions, signal);
+  return useQuery({ queryKey, queryFn, ...queryOptions });
 }

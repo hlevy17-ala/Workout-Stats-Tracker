@@ -125,3 +125,23 @@ export type UploadWorkoutCsvBody = {
   file: Blob;
   mapping: string;
 };
+
+export type WorkoutHeatmapItem = { date: string; volumeKg: number };
+export type WorkoutHeatmapData = WorkoutHeatmapItem[];
+
+export type MostImprovedItem = {
+  exercise: string;
+  firstDate: string;
+  lastDate: string;
+  firstAvgKg: number;
+  lastAvgKg: number;
+  pctGain: number;
+};
+export type MostImprovedData = MostImprovedItem[];
+
+export type PersonalRecordTimelineItem = {
+  exercise: string;
+  maxWeightKg: number;
+  prDate: string;
+};
+export type PersonalRecordsTimelineData = PersonalRecordTimelineItem[];

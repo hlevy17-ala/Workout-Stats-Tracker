@@ -1,0 +1,137 @@
+import { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useGetWorkoutHeatmap } from "@workspace/api-client-react";
+
+const KG_TO_LBS = 2.20462;
+const NUM_WEEKS = 16;
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function toLocalStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function buildGrid(volumeMap: Map<string, number>) {
+  const today = new Date();
+  const todayStr = toLocalStr(today);
+  const dayOfWeek = (today.getDay() + 6) % 7;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dayOfWeek);
+  const startDate = new Date(monday);
+  startDate.setDate(monday.getDate() - (NUM_WEEKS - 1) * 7);
+
+  const weeks: { date: string; volumeKg: number | null; isToday: boolean; isFuture: boolean }[][] = [];
+  for (let w = 0; w < NUM_WEEKS; w++) {
+    const week = [];
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + w * 7 + d);
+      const dateStr = toLocalStr(date);
+      week.push({
+        date: dateStr,
+        volumeKg: volumeMap.get(dateStr) ?? null,
+        isToday: dateStr === todayStr,
+        isFuture: dateStr > todayStr,
+      });
+    }
+    weeks.push(week);
+  }
+  return weeks;
+}
+
+function getMonthLabels(weeks: ReturnType<typeof buildGrid>) {
+  const labels: { weekIdx: number; label: string }[] = [];
+  let lastMonth = -1;
+  for (let w = 0; w < weeks.length; w++) {
+    const [y, m] = weeks[w][0].date.split("-").map(Number);
+    if (m !== lastMonth) {
+      labels.push({ weekIdx: w, label: new Date(y, m - 1, 1).toLocaleString("default", { month: "short" }) });
+      lastMonth = m;
+    }
+  }
+  return labels;
+}
+
+function getCellStyle(volumeKg: number | null, maxVolume: number, isFuture: boolean) {
+  if (isFuture) return { backgroundColor: "transparent", opacity: 0.2 };
+  if (!volumeKg || volumeKg === 0) return {};
+  const intensity = Math.min(volumeKg / (maxVolume || 1), 1);
+  const lightness = Math.round(55 - intensity * 22);
+  const saturation = Math.round(60 + intensity * 35);
+  return { backgroundColor: `hsl(20 ${saturation}% ${lightness}%)` };
+}
+
+function formatDate(dateStr: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("default", { weekday: "short", month: "short", day: "numeric" });
+}
+
+export function ConsistencyHeatmapWidget() {
+  const { data, isLoading } = useGetWorkoutHeatmap();
+
+  const { weeks, maxVolume, monthLabels } = useMemo(() => {
+    const volumeMap = new Map((data ?? []).map(d => [d.date, d.volumeKg]));
+    const maxVolume = Math.max(...(data ?? []).map(d => d.volumeKg), 1);
+    const weeks = buildGrid(volumeMap);
+    const monthLabels = getMonthLabels(weeks);
+    return { weeks, maxVolume, monthLabels };
+  }, [data]);
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold">Training Consistency</CardTitle>
+        <p className="text-xs text-muted-foreground">Last 16 weeks of activity — darker = higher volume</p>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="h-28 bg-muted/40 rounded-lg animate-pulse" />
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="inline-flex flex-col gap-1 min-w-max">
+              <div className="flex gap-1 pl-8">
+                {weeks.map((week, w) => {
+                  const label = monthLabels.find(l => l.weekIdx === w);
+                  return (
+                    <div key={w} className="w-3.5 text-[9px] text-muted-foreground">
+                      {label?.label ?? ""}
+                    </div>
+                  );
+                })}
+              </div>
+              {DAYS.map((day, d) => (
+                <div key={day} className="flex items-center gap-1">
+                  <span className="text-[9px] text-muted-foreground w-7 text-right pr-1">{d % 2 === 0 ? day : ""}</span>
+                  {weeks.map((week, w) => {
+                    const cell = week[d];
+                    const style = getCellStyle(cell.volumeKg, maxVolume, cell.isFuture);
+                    const hasData = cell.volumeKg != null && cell.volumeKg > 0;
+                    return (
+                      <Tooltip key={w}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`w-3.5 h-3.5 rounded-sm cursor-default transition-opacity ${cell.isToday ? "ring-1 ring-primary ring-offset-1 ring-offset-background" : ""} ${!hasData && !cell.isFuture ? "bg-muted/60" : ""}`}
+                            style={style}
+                          />
+                        </TooltipTrigger>
+                        {!cell.isFuture && (
+                          <TooltipContent side="top" className="text-xs">
+                            <p className="font-medium">{formatDate(cell.date)}</p>
+                            {hasData
+                              ? <p>{Math.round((cell.volumeKg! * KG_TO_LBS)).toLocaleString()} lbs lifted</p>
+                              : <p className="text-muted-foreground">Rest day</p>
+                            }
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
