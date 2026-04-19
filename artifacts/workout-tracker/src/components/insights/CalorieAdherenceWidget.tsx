@@ -13,8 +13,8 @@ export function CalorieAdherenceWidget() {
   const { data: consumeGoalData } = useGetCalorieDailyGoal();
   const { data: burnGoalData } = useGetCalorieBurnGoal();
 
-  const consumeGoal = consumeGoalData?.goal ?? null;
-  const burnGoal = burnGoalData?.goal ?? null;
+  const consumeGoal = consumeGoalData?.value ?? null;
+  const burnGoal = burnGoalData?.value ?? null;
   const targetDeficit = burnGoal != null && consumeGoal != null ? burnGoal - consumeGoal : null;
 
   const { chartData, adherenceRate, avgDeficit } = useMemo(() => {

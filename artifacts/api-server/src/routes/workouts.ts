@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
 import { sql } from "drizzle-orm";
-import { db, workoutSetsTable, bodyMetricsTable, calorieLogsTable } from "@workspace/db";
+import { db, workoutSetsTable } from "@workspace/db";
 import {
   UploadWorkoutCsvResponse,
   GetWorkoutsByExerciseResponse,
@@ -10,10 +10,6 @@ import {
   GetAvgWeightByMuscleGroupResponse,
   GetPersonalRecordsResponse,
   GetExerciseListResponse,
-  GetBodyMetricsResponse,
-  CreateBodyMetricBody,
-  GetCalorieLogsResponse,
-  CreateCalorieLogBody,
   GetWorkoutHeatmapResponse,
   GetMostImprovedResponse,
   GetPersonalRecordsTimelineResponse,
@@ -280,73 +276,6 @@ router.get("/workouts/exercises", async (req, res): Promise<void> => {
   res.json(GetExerciseListResponse.parse(rows.map((r) => r.exercise)));
 });
 
-function normalizeBodyMetric(row: {
-  id: number;
-  date: string;
-  weightLbs: string | null;
-  waistInches: string | null;
-}) {
-  return {
-    id: row.id,
-    date: row.date,
-    weightLbs: row.weightLbs != null ? parseFloat(row.weightLbs) : null,
-    waistInches: row.waistInches != null ? parseFloat(row.waistInches) : null,
-  };
-}
-
-router.get("/body-metrics", async (_req, res): Promise<void> => {
-  const rows = await db
-    .select()
-    .from(bodyMetricsTable)
-    .orderBy(bodyMetricsTable.date);
-
-  res.json(GetBodyMetricsResponse.parse(rows.map(normalizeBodyMetric)));
-});
-
-router.post("/body-metrics", async (req, res): Promise<void> => {
-  const parsed = CreateBodyMetricBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  const { date, weightLbs, waistInches } = parsed.data;
-
-  const [metric] = await db
-    .insert(bodyMetricsTable)
-    .values({
-      date,
-      weightLbs: weightLbs != null ? String(weightLbs) : null,
-      waistInches: waistInches != null ? String(waistInches) : null,
-    })
-    .onConflictDoUpdate({
-      target: bodyMetricsTable.date,
-      set: {
-        weightLbs: weightLbs != null ? String(weightLbs) : null,
-        waistInches: waistInches != null ? String(waistInches) : null,
-      },
-    })
-    .returning();
-
-  res.status(201).json(normalizeBodyMetric(metric));
-});
-
-router.get("/calorie-logs", async (_req, res): Promise<void> => {
-  const rows = await db
-    .select()
-    .from(calorieLogsTable)
-    .orderBy(calorieLogsTable.date);
-
-  const normalized = rows.map((r) => ({
-    id: r.id,
-    date: r.date,
-    caloriesConsumed: r.caloriesConsumed ?? null,
-    caloriesBurned: r.caloriesBurned ?? null,
-  }));
-
-  res.json(GetCalorieLogsResponse.parse(normalized));
-});
-
 router.get("/workouts/personal-records", async (_req, res): Promise<void> => {
   const rows = await db
     .select({
@@ -432,39 +361,6 @@ router.get("/workouts/personal-records-timeline", async (_req, res): Promise<voi
     .sort((a, b) => b.prDate.localeCompare(a.prDate));
 
   res.json(GetPersonalRecordsTimelineResponse.parse(result));
-});
-
-router.post("/calorie-logs", async (req, res): Promise<void> => {
-  const parsed = CreateCalorieLogBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  const { date, caloriesConsumed, caloriesBurned } = parsed.data;
-
-  const [log] = await db
-    .insert(calorieLogsTable)
-    .values({
-      date,
-      caloriesConsumed: caloriesConsumed ?? null,
-      caloriesBurned: caloriesBurned ?? null,
-    })
-    .onConflictDoUpdate({
-      target: calorieLogsTable.date,
-      set: {
-        caloriesConsumed: caloriesConsumed ?? null,
-        caloriesBurned: caloriesBurned ?? null,
-      },
-    })
-    .returning();
-
-  res.status(201).json({
-    id: log.id,
-    date: log.date,
-    caloriesConsumed: log.caloriesConsumed ?? null,
-    caloriesBurned: log.caloriesBurned ?? null,
-  });
 });
 
 export default router;
