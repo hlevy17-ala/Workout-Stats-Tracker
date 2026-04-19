@@ -9,13 +9,12 @@ function toLocalDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function getWeekBounds() {
-  const today = new Date();
-  const todayStr = toLocalDateStr(today);
-  const d7 = new Date(today); d7.setDate(today.getDate() - 7);
-  const d14 = new Date(today); d14.setDate(today.getDate() - 14);
+function getRollingBounds(anchor: string) {
+  const anchorDate = new Date(anchor + "T00:00:00");
+  const d7 = new Date(anchorDate); d7.setDate(anchorDate.getDate() - 7);
+  const d14 = new Date(anchorDate); d14.setDate(anchorDate.getDate() - 14);
   return {
-    todayStr,
+    anchorStr: anchor,
     thisWeekStart: toLocalDateStr(d7),
     lastWeekStart: toLocalDateStr(d14),
   };
@@ -54,9 +53,15 @@ export function WeeklySnapshotWidget() {
   const { data: calorieLogs } = useGetCalorieLogs();
 
   const stats = useMemo(() => {
-    const { todayStr, thisWeekStart, lastWeekStart } = getWeekBounds();
+    const todayStr = toLocalDateStr(new Date());
 
-    const thisWeekRows = workoutData?.filter(r => r.date > thisWeekStart && r.date <= todayStr) ?? [];
+    const workoutDates = workoutData?.map(r => r.date) ?? [];
+    const mostRecentWorkoutDate = workoutDates.length > 0 ? [...workoutDates].sort().at(-1)! : todayStr;
+    const anchor = mostRecentWorkoutDate <= todayStr ? mostRecentWorkoutDate : todayStr;
+
+    const { anchorStr, thisWeekStart, lastWeekStart } = getRollingBounds(anchor);
+
+    const thisWeekRows = workoutData?.filter(r => r.date > thisWeekStart && r.date <= anchorStr) ?? [];
     const lastWeekRows = workoutData?.filter(r => r.date > lastWeekStart && r.date <= thisWeekStart) ?? [];
 
     const thisWeekDates = new Set(thisWeekRows.map(r => r.date));
@@ -72,7 +77,7 @@ export function WeeklySnapshotWidget() {
     const prevWeight = bodyMetrics?.at(-2)?.weightLbs ?? null;
     const weightDelta = recentWeight != null && prevWeight != null ? Math.round((recentWeight - prevWeight) * 10) / 10 : null;
 
-    const thisWeekCals = (calorieLogs ?? []).filter(l => l.date > thisWeekStart && l.date <= todayStr);
+    const thisWeekCals = (calorieLogs ?? []).filter(l => l.date > thisWeekStart && l.date <= anchorStr);
     const deficits = thisWeekCals.map(l => (l.caloriesBurned ?? 0) - (l.caloriesConsumed ?? 0)).filter(d => d !== 0);
     const avgDeficit = deficits.length > 0 ? Math.round(deficits.reduce((a, b) => a + b, 0) / deficits.length) : null;
 
@@ -82,7 +87,7 @@ export function WeeklySnapshotWidget() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">This Week</CardTitle>
+        <CardTitle className="text-base font-semibold">Last 7 Days</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
