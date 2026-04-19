@@ -53,7 +53,10 @@ const DEFAULT_STATE: Record<WidgetId, boolean> = {
   prTimeline: true,
 };
 
+type PresetId = "4w" | "3m" | "6m" | "1y" | "custom";
+
 const STORAGE_KEY = "insights-widget-visibility";
+const DATE_RANGE_STORAGE_KEY = "insights-date-range";
 
 function loadVisibility(): Record<WidgetId, boolean> {
   try {
@@ -63,7 +66,29 @@ function loadVisibility(): Record<WidgetId, boolean> {
   return DEFAULT_STATE;
 }
 
-type PresetId = "4w" | "3m" | "6m" | "1y" | "custom";
+interface StoredDateRange {
+  preset: PresetId | null;
+  customStart: string;
+  customEnd: string;
+}
+
+const VALID_PRESETS: PresetId[] = ["4w", "3m", "6m", "1y", "custom"];
+
+function loadDateRange(): StoredDateRange {
+  try {
+    const stored = localStorage.getItem(DATE_RANGE_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as StoredDateRange;
+      const validPreset = parsed.preset && VALID_PRESETS.includes(parsed.preset) ? parsed.preset : null;
+      return {
+        preset: validPreset,
+        customStart: typeof parsed.customStart === "string" ? parsed.customStart : "",
+        customEnd: typeof parsed.customEnd === "string" ? parsed.customEnd : "",
+      };
+    }
+  } catch {}
+  return { preset: null, customStart: "", customEnd: "" };
+}
 
 interface DatePreset {
   id: PresetId;
@@ -101,11 +126,17 @@ function getPresetLabel(preset: PresetId, customStart: string, customEnd: string
   return DATE_PRESETS.find(p => p.id === preset)?.label ?? "All time";
 }
 
+function saveDateRange(preset: PresetId | null, customStart: string, customEnd: string) {
+  try {
+    localStorage.setItem(DATE_RANGE_STORAGE_KEY, JSON.stringify({ preset, customStart, customEnd }));
+  } catch {}
+}
+
 export function InsightsTab() {
   const [visibility, setVisibility] = useState<Record<WidgetId, boolean>>(loadVisibility);
-  const [selectedPreset, setSelectedPreset] = useState<PresetId | null>(null);
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
+  const [selectedPreset, setSelectedPreset] = useState<PresetId | null>(() => loadDateRange().preset);
+  const [customStart, setCustomStart] = useState(() => loadDateRange().customStart);
+  const [customEnd, setCustomEnd] = useState(() => loadDateRange().customEnd);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const toggle = (id: WidgetId) => {
@@ -135,6 +166,7 @@ export function InsightsTab() {
 
   const handlePresetClick = (preset: PresetId) => {
     setSelectedPreset(preset);
+    saveDateRange(preset, customStart, customEnd);
     if (preset !== "custom") setDatePickerOpen(false);
   };
 
@@ -142,6 +174,7 @@ export function InsightsTab() {
     setSelectedPreset(null);
     setCustomStart("");
     setCustomEnd("");
+    saveDateRange(null, "", "");
     setDatePickerOpen(false);
   };
 
@@ -197,7 +230,7 @@ export function InsightsTab() {
                     <Input
                       type="date"
                       value={customStart}
-                      onChange={(e) => setCustomStart(e.target.value)}
+                      onChange={(e) => { setCustomStart(e.target.value); saveDateRange("custom", e.target.value, customEnd); }}
                       className="h-8 text-sm"
                     />
                   </div>
@@ -206,7 +239,7 @@ export function InsightsTab() {
                     <Input
                       type="date"
                       value={customEnd}
-                      onChange={(e) => setCustomEnd(e.target.value)}
+                      onChange={(e) => { setCustomEnd(e.target.value); saveDateRange("custom", customStart, e.target.value); }}
                       className="h-8 text-sm"
                     />
                   </div>
