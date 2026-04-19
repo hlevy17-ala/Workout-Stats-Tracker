@@ -180,10 +180,10 @@ export function MuscleGroupProgress() {
             <CardContent className="pt-2">
               <div className="h-[340px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={avgWeightData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <LineChart data={avgWeightData} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" tickFormatter={tickFormatter} dy={10} {...axisStyle} />
-                    <YAxis dx={-10} tickFormatter={(val) => `${val}lbs`} {...axisStyle} />
+                    <YAxis tickFormatter={(val) => `${val}lbs`} {...axisStyle} />
                     <Tooltip
                       {...tooltipStyle}
                       formatter={(value: number, name: string) =>
@@ -211,10 +211,10 @@ export function MuscleGroupProgress() {
             <CardContent className="pt-2">
               <div className="h-[340px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={volumeData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <LineChart data={volumeData} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" tickFormatter={tickFormatter} dy={10} {...axisStyle} />
-                    <YAxis dx={-10} tickFormatter={(val) => `${val}lbs`} {...axisStyle} />
+                    <YAxis tickFormatter={(val) => `${val}lbs`} {...axisStyle} />
                     <Tooltip
                       {...tooltipStyle}
                       formatter={(value: number, name: string) =>

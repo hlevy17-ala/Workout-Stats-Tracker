@@ -17,22 +17,39 @@ export function CalorieAdherenceWidget() {
   const burnGoal = burnGoalData?.value ?? null;
   const targetDeficit = burnGoal != null && consumeGoal != null ? burnGoal - consumeGoal : null;
 
-  const { chartData, adherenceRate, avgDeficit } = useMemo(() => {
-    const recent = (logs ?? []).slice(-30);
-    const chartData = recent
-      .filter(l => l.caloriesConsumed != null || l.caloriesBurned != null)
-      .map(l => ({
-        date: shortDate(l.date),
-        deficit: (l.caloriesBurned ?? 0) - (l.caloriesConsumed ?? 0),
-      }));
+  const { chartData, adherenceRate, avgDeficit, hasAnyData } = useMemo(() => {
+    const logMap = new Map<string, { caloriesConsumed: number | null; caloriesBurned: number | null }>();
+    for (const l of logs ?? []) {
+      logMap.set(l.date, { caloriesConsumed: l.caloriesConsumed ?? null, caloriesBurned: l.caloriesBurned ?? null });
+    }
 
-    const daysWithDeficit = chartData.filter(d => d.deficit > 0).length;
-    const adherenceRate = chartData.length > 0 ? Math.round((daysWithDeficit / chartData.length) * 100) : null;
-    const avgDeficit = chartData.length > 0
-      ? Math.round(chartData.reduce((s, d) => s + d.deficit, 0) / chartData.length)
+    const today = new Date();
+    const days: { date: string; deficit: number | null; hasData: boolean }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const iso = [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, "0"),
+        String(d.getDate()).padStart(2, "0"),
+      ].join("-");
+      const log = logMap.get(iso);
+      if (log) {
+        days.push({ date: shortDate(iso), deficit: (log.caloriesBurned ?? 0) - (log.caloriesConsumed ?? 0), hasData: true });
+      } else {
+        days.push({ date: shortDate(iso), deficit: null, hasData: false });
+      }
+    }
+
+    const chartData = days.map(d => ({ date: d.date, deficit: d.deficit ?? 0, hasData: d.hasData }));
+    const loggedDays = days.filter(d => d.hasData);
+    const daysWithDeficit = loggedDays.filter(d => (d.deficit ?? 0) > 0).length;
+    const adherenceRate = loggedDays.length > 0 ? Math.round((daysWithDeficit / loggedDays.length) * 100) : null;
+    const avgDeficit = loggedDays.length > 0
+      ? Math.round(loggedDays.reduce((s, d) => s + (d.deficit ?? 0), 0) / loggedDays.length)
       : null;
 
-    return { chartData, adherenceRate, avgDeficit };
+    return { chartData, adherenceRate, avgDeficit, hasAnyData: loggedDays.length > 0 };
   }, [logs]);
 
   return (
@@ -52,7 +69,7 @@ export function CalorieAdherenceWidget() {
         </div>
       </CardHeader>
       <CardContent className="flex-1">
-        {chartData.length === 0 ? (
+        {!hasAnyData ? (
           <p className="text-sm text-muted-foreground text-center py-8">No nutrition data logged yet.</p>
         ) : (
           <>
@@ -71,7 +88,17 @@ export function CalorieAdherenceWidget() {
                 <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1} />
                 <Bar dataKey="deficit" radius={[3, 3, 0, 0]}>
                   {chartData.map((entry, i) => (
-                    <Cell key={i} fill={entry.deficit >= (targetDeficit ?? 0) ? "hsl(150 60% 45%)" : "hsl(20 80% 50%)"} />
+                    <Cell
+                      key={i}
+                      fill={
+                        !entry.hasData
+                          ? "hsl(var(--muted))"
+                          : entry.deficit >= (targetDeficit ?? 0)
+                          ? "hsl(150 60% 45%)"
+                          : "hsl(20 80% 50%)"
+                      }
+                      opacity={entry.hasData ? 1 : 0.4}
+                    />
                   ))}
                 </Bar>
               </BarChart>
