@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Settings, ChevronDown, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,6 +13,7 @@ import { BodyCompositionWidget } from "./BodyCompositionWidget";
 import { CalorieAdherenceWidget } from "./CalorieAdherenceWidget";
 import { PersonalRecordsTimelineWidget } from "./PersonalRecordsTimelineWidget";
 import type { InsightsDateParams } from "@workspace/api-client-react";
+import { getWidgetVisibility, getGetWidgetVisibilityUrl } from "@workspace/api-client-react";
 
 type WidgetId =
   | "weeklySnapshot"
@@ -132,17 +133,44 @@ function saveDateRange(preset: PresetId | null, customStart: string, customEnd: 
   } catch {}
 }
 
+async function saveVisibilityToServer(visibility: Record<WidgetId, boolean>) {
+  try {
+    await fetch(getGetWidgetVisibilityUrl(), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(visibility),
+    });
+  } catch {}
+}
+
 export function InsightsTab() {
   const [visibility, setVisibility] = useState<Record<WidgetId, boolean>>(loadVisibility);
   const [selectedPreset, setSelectedPreset] = useState<PresetId | null>(() => loadDateRange().preset);
   const [customStart, setCustomStart] = useState(() => loadDateRange().customStart);
   const [customEnd, setCustomEnd] = useState(() => loadDateRange().customEnd);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const serverLoaded = useRef(false);
+  const dirtyAfterMount = useRef(false);
+
+  useEffect(() => {
+    if (serverLoaded.current) return;
+    getWidgetVisibility().then((serverData) => {
+      serverLoaded.current = true;
+      if (!serverData || dirtyAfterMount.current) return;
+      const merged = { ...DEFAULT_STATE, ...serverData } as Record<WidgetId, boolean>;
+      setVisibility(merged);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch {}
+    }).catch(() => {
+      serverLoaded.current = true;
+    });
+  }, []);
 
   const toggle = (id: WidgetId) => {
+    dirtyAfterMount.current = true;
     setVisibility((prev) => {
       const next = { ...prev, [id]: !prev[id] };
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
+      saveVisibilityToServer(next);
       return next;
     });
   };

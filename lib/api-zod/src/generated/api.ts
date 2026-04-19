@@ -211,3 +211,21 @@ export const GetPersonalRecordsTimelineItem = zod.object({
   prDate: zod.string().describe("Date when PR was set (YYYY-MM-DD)"),
 });
 export const GetPersonalRecordsTimelineResponse = zod.array(GetPersonalRecordsTimelineItem);
+
+const widgetVisibilityShape = {
+  weeklySnapshot: zod.boolean(),
+  mostImproved: zod.boolean(),
+  heatmap: zod.boolean(),
+  volumeByMuscleGroup: zod.boolean(),
+  bodyComposition: zod.boolean(),
+  calorieAdherence: zod.boolean(),
+  prTimeline: zod.boolean(),
+};
+
+export const WidgetVisibilitySchema = zod.object(widgetVisibilityShape);
+
+export const GetWidgetVisibilityResponse = zod.object(widgetVisibilityShape).nullable();
+
+export const SetWidgetVisibilityBody = zod.object(widgetVisibilityShape);
+
+export const SetWidgetVisibilityResponse = zod.object(widgetVisibilityShape);

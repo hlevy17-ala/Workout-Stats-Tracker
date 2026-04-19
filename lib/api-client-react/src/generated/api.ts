@@ -34,6 +34,7 @@ import type {
   PersonalRecordsTimelineData,
   UploadResult,
   UploadWorkoutCsvBody,
+  WidgetVisibility,
   WorkoutHeatmapData,
 } from "./api.schemas";
 
@@ -1240,4 +1241,96 @@ export function useGetPersonalRecordsTimeline<
   const queryFn: QueryFunction<PersonalRecordsTimelineData> = ({ signal }) =>
     getPersonalRecordsTimeline(requestOptions, signal);
   return useQuery({ queryKey, queryFn, ...queryOptions });
+}
+
+// ─── Widget Visibility ────────────────────────────────────────────────────────
+
+export const getGetWidgetVisibilityUrl = () => `/api/settings/widget-visibility`;
+
+export const getWidgetVisibility = async (
+  options?: RequestInit,
+): Promise<WidgetVisibility | null> => {
+  return customFetch<WidgetVisibility | null>(getGetWidgetVisibilityUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWidgetVisibilityQueryKey = () =>
+  [`/api/settings/widget-visibility`] as const;
+
+export const getGetWidgetVisibilityQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWidgetVisibility>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getWidgetVisibility>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetWidgetVisibilityQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getWidgetVisibility>>> = ({
+    signal,
+  }) => getWidgetVisibility({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWidgetVisibility>>,
+    TError,
+    TData
+  >;
+};
+
+export function useGetWidgetVisibility<
+  TData = Awaited<ReturnType<typeof getWidgetVisibility>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getWidgetVisibility>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWidgetVisibilityQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+export const getSetWidgetVisibilityMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    WidgetVisibility,
+    TError,
+    { data: WidgetVisibility },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<WidgetVisibility, TError, { data: WidgetVisibility }, TContext> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  return {
+    mutationFn: async ({ data }) => {
+      return customFetch<WidgetVisibility>(getGetWidgetVisibilityUrl(), {
+        ...requestOptions,
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...requestOptions?.headers },
+        body: JSON.stringify(data),
+      });
+    },
+    ...mutationOptions,
+  };
+};
+
+export function useSetWidgetVisibility<
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    WidgetVisibility,
+    TError,
+    { data: WidgetVisibility },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<WidgetVisibility, TError, { data: WidgetVisibility }, TContext> {
+  const mutationOptions = getSetWidgetVisibilityMutationOptions(options);
+  return useMutation(mutationOptions);
 }

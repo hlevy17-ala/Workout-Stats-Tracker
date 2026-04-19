@@ -145,3 +145,13 @@ export type PersonalRecordTimelineItem = {
   prDate: string;
 };
 export type PersonalRecordsTimelineData = PersonalRecordTimelineItem[];
+
+export interface WidgetVisibility {
+  weeklySnapshot: boolean;
+  mostImproved: boolean;
+  heatmap: boolean;
+  volumeByMuscleGroup: boolean;
+  bodyComposition: boolean;
+  calorieAdherence: boolean;
+  prTimeline: boolean;
+}
