@@ -28,11 +28,11 @@ export default function Dashboard() {
             </TabsTrigger>
             <TabsTrigger value="exercises" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Dumbbell className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Movements</span>
+              <span className="hidden sm:inline">Exercises</span>
             </TabsTrigger>
             <TabsTrigger value="muscles" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Activity className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Systemic</span>
+              <span className="hidden sm:inline">Muscle Groups</span>
             </TabsTrigger>
             <TabsTrigger value="metrics" className="py-3 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
               <Scale className="w-4 h-4 mr-2" />

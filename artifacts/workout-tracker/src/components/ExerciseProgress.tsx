@@ -17,10 +17,19 @@ export function ExerciseProgress() {
   const { data: personalRecords = [], isLoading: isLoadingPRs } = useGetPersonalRecords();
 
   useEffect(() => {
-    if (exercises.length > 0 && !selectedExercise) {
-      setSelectedExercise(exercises[0]);
+    if (exercises.length > 0 && allWorkouts.length > 0 && !selectedExercise) {
+      const sessionCounts: Record<string, Set<string>> = {};
+      for (const w of allWorkouts) {
+        if (!sessionCounts[w.exercise]) sessionCounts[w.exercise] = new Set();
+        sessionCounts[w.exercise].add(w.date);
+      }
+      const mostLogged = exercises.reduce((best, ex) =>
+        (sessionCounts[ex]?.size ?? 0) > (sessionCounts[best]?.size ?? 0) ? ex : best,
+        exercises[0]
+      );
+      setSelectedExercise(mostLogged);
     }
-  }, [exercises, selectedExercise]);
+  }, [exercises, allWorkouts, selectedExercise]);
 
   const KG_TO_LBS = 2.20462;
 
@@ -99,8 +108,8 @@ export function ExerciseProgress() {
   }
 
   function formatDate(dateStr: string) {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   }
 
   const isLoading = isLoadingList || isLoadingWorkouts || isLoadingAvg || isLoadingPRs;
@@ -142,7 +151,7 @@ export function ExerciseProgress() {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Movement Tracking</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Exercise Progress</h2>
           <p className="text-muted-foreground">Analyze your volume and average weight progression per exercise.</p>
         </div>
 
@@ -166,7 +175,7 @@ export function ExerciseProgress() {
               onClick={() => setViewMode("history")}
               className={`rounded-none px-3 h-9 text-xs font-medium ${viewMode === "history" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "text-muted-foreground"}`}
             >
-              History
+              Full History
             </Button>
             <Button
               size="sm"
@@ -174,7 +183,7 @@ export function ExerciseProgress() {
               onClick={() => setViewMode("comparison")}
               className={`rounded-none px-3 h-9 text-xs font-medium border-l border-border ${viewMode === "comparison" ? "bg-primary text-primary-foreground hover:bg-primary/90" : "text-muted-foreground"}`}
             >
-              vs Last
+              Last Session
             </Button>
           </div>
         </div>
@@ -256,6 +265,28 @@ export function ExerciseProgress() {
             <p className="text-muted-foreground text-sm">Not enough sessions to compare.</p>
           </Card>
         )
+      ) : avgWeightData.length === 1 ? (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="pt-8 pb-8">
+            <div className="text-center space-y-2 mb-8">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Only session logged</p>
+              <p className="text-sm text-muted-foreground">{formatDate(avgWeightData[0].date)}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-8 max-w-sm mx-auto">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1"><Weight className="w-3 h-3" />Avg Weight / Set</p>
+                <p className="text-4xl font-black tabular-nums text-chart-2">{avgWeightData[0].avgLbs}</p>
+                <p className="text-sm text-muted-foreground">lbs</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1"><TrendingUp className="w-3 h-3" />Total Volume</p>
+                <p className="text-4xl font-black tabular-nums text-chart-1">{volumeData[0]?.totalLbs.toLocaleString() ?? "—"}</p>
+                <p className="text-sm text-muted-foreground">lbs</p>
+              </div>
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-8">Log more sessions to see progression charts.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-6">
           <Card className="overflow-hidden">

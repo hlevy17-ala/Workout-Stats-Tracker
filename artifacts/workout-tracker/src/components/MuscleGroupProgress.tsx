@@ -154,7 +154,7 @@ export function MuscleGroupProgress() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Systemic Load</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Muscle Groups</h2>
         <p className="text-muted-foreground">Track average weight and volume distribution across primary muscle groups.</p>
       </div>
 
