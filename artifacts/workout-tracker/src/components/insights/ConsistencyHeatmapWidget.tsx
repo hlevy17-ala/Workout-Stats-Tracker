@@ -1,31 +1,59 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useGetWorkoutHeatmap } from "@workspace/api-client-react";
+import { useGetWorkoutHeatmap, type InsightsDateParams } from "@workspace/api-client-react";
 
 const KG_TO_LBS = 2.20462;
-const NUM_WEEKS = 16;
+const DEFAULT_NUM_WEEKS = 16;
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function toLocalStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function buildGrid(volumeMap: Map<string, number>) {
+function parseLocalDate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function getMondayOf(date: Date): Date {
+  const dayOfWeek = (date.getDay() + 6) % 7;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - dayOfWeek);
+  return monday;
+}
+
+function buildGrid(
+  volumeMap: Map<string, number>,
+  startDate?: string,
+  endDate?: string,
+) {
   const today = new Date();
   const todayStr = toLocalStr(today);
-  const dayOfWeek = (today.getDay() + 6) % 7;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - dayOfWeek);
-  const startDate = new Date(monday);
-  startDate.setDate(monday.getDate() - (NUM_WEEKS - 1) * 7);
+
+  let gridStart: Date;
+  let numWeeks: number;
+
+  if (startDate && endDate) {
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
+    gridStart = getMondayOf(start);
+    const endMonday = getMondayOf(end);
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    numWeeks = Math.max(1, Math.round((endMonday.getTime() - gridStart.getTime()) / msPerWeek) + 1);
+  } else {
+    const monday = getMondayOf(today);
+    gridStart = new Date(monday);
+    gridStart.setDate(monday.getDate() - (DEFAULT_NUM_WEEKS - 1) * 7);
+    numWeeks = DEFAULT_NUM_WEEKS;
+  }
 
   const weeks: { date: string; volumeKg: number | null; isToday: boolean; isFuture: boolean }[][] = [];
-  for (let w = 0; w < NUM_WEEKS; w++) {
+  for (let w = 0; w < numWeeks; w++) {
     const week = [];
     for (let d = 0; d < 7; d++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + w * 7 + d);
+      const date = new Date(gridStart);
+      date.setDate(gridStart.getDate() + w * 7 + d);
       const dateStr = toLocalStr(date);
       week.push({
         date: dateStr,
@@ -66,22 +94,30 @@ function formatDate(dateStr: string) {
   return new Date(y, m - 1, d).toLocaleDateString("default", { weekday: "short", month: "short", day: "numeric" });
 }
 
-export function ConsistencyHeatmapWidget() {
-  const { data, isLoading } = useGetWorkoutHeatmap();
+interface ConsistencyHeatmapWidgetProps {
+  dateParams?: InsightsDateParams;
+}
+
+export function ConsistencyHeatmapWidget({ dateParams }: ConsistencyHeatmapWidgetProps) {
+  const { data, isLoading } = useGetWorkoutHeatmap(dateParams);
 
   const { weeks, maxVolume, monthLabels } = useMemo(() => {
     const volumeMap = new Map((data ?? []).map(d => [d.date, d.volumeKg]));
     const maxVolume = Math.max(...(data ?? []).map(d => d.volumeKg), 1);
-    const weeks = buildGrid(volumeMap);
+    const weeks = buildGrid(volumeMap, dateParams?.startDate, dateParams?.endDate);
     const monthLabels = getMonthLabels(weeks);
     return { weeks, maxVolume, monthLabels };
-  }, [data]);
+  }, [data, dateParams]);
+
+  const subtitle = dateParams?.startDate && dateParams?.endDate
+    ? `${dateParams.startDate} – ${dateParams.endDate} · darker = higher volume`
+    : "Last 16 weeks of activity — darker = higher volume";
 
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">Training Consistency</CardTitle>
-        <p className="text-xs text-muted-foreground">Last 16 weeks of activity — darker = higher volume</p>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
       </CardHeader>
       <CardContent>
         {isLoading ? (

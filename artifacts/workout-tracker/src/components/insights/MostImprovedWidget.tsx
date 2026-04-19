@@ -1,12 +1,16 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useGetMostImproved } from "@workspace/api-client-react";
+import { useGetMostImproved, type InsightsDateParams } from "@workspace/api-client-react";
 
 const KG_TO_LBS = 2.20462;
 
-export function MostImprovedWidget() {
-  const { data, isLoading } = useGetMostImproved();
+interface MostImprovedWidgetProps {
+  dateParams?: InsightsDateParams;
+}
+
+export function MostImprovedWidget({ dateParams }: MostImprovedWidgetProps) {
+  const { data, isLoading } = useGetMostImproved(dateParams);
 
   const items = data?.slice(0, 5) ?? [];
 

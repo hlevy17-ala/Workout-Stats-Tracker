@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGetWorkoutsByMuscleGroup } from "@workspace/api-client-react";
+import { useGetWorkoutsByMuscleGroup, type InsightsDateParams } from "@workspace/api-client-react";
 
 const KG_TO_LBS = 2.20462;
 
@@ -30,8 +30,12 @@ function shortDate(dateStr: string) {
   return `${m}/${d}`;
 }
 
-export function VolumeByMuscleGroupWidget() {
-  const { data, isLoading } = useGetWorkoutsByMuscleGroup();
+interface VolumeByMuscleGroupWidgetProps {
+  dateParams?: InsightsDateParams;
+}
+
+export function VolumeByMuscleGroupWidget({ dateParams }: VolumeByMuscleGroupWidgetProps) {
+  const { data, isLoading } = useGetWorkoutsByMuscleGroup(dateParams);
 
   const { chartData, muscleGroups } = useMemo(() => {
     const weekMap = new Map<string, Record<string, number>>();
@@ -41,7 +45,7 @@ export function VolumeByMuscleGroupWidget() {
       const entry = weekMap.get(week)!;
       entry[row.muscleGroup] = (entry[row.muscleGroup] ?? 0) + row.totalKg * KG_TO_LBS;
     }
-    const sorted = [...weekMap.entries()].sort((a, b) => a[0].localeCompare(b[0])).slice(-12);
+    const sorted = [...weekMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
     const muscleGroups = [...new Set((data ?? []).map(r => r.muscleGroup))].sort();
     const chartData = sorted.map(([week, groups]) => ({
       week: shortDate(week),

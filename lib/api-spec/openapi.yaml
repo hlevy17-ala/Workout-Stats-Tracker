@@ -83,6 +83,19 @@ paths:
       tags: [workouts]
       summary: Get total weight by muscle group over time
       description: Returns total weight lifted (kg) per muscle group grouped by workout date
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter results on or after this date (YYYY-MM-DD)
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter results on or before this date (YYYY-MM-DD)
       responses:
         "200":
           description: Muscle group progress data
@@ -108,6 +121,64 @@ paths:
                 type: array
                 items:
                   type: string
+
+  /workouts/heatmap:
+    get:
+      operationId: getWorkoutHeatmap
+      tags: [workouts]
+      summary: Get training consistency heatmap data
+      description: Returns total volume per day across all workout sessions
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter results on or after this date (YYYY-MM-DD)
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter results on or before this date (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Heatmap data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HeatmapDataPoint"
+
+  /workouts/most-improved:
+    get:
+      operationId: getMostImproved
+      tags: [workouts]
+      summary: Get most improved exercises
+      description: Returns exercises with the highest percentage weight gain (first vs most recent session)
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter sessions on or after this date (YYYY-MM-DD)
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter sessions on or before this date (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Most improved exercises
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MostImprovedItem"
 
   /body-metrics:
     get:
@@ -209,6 +280,48 @@ components:
         - date
         - muscleGroup
         - totalKg
+
+    HeatmapDataPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Workout date (YYYY-MM-DD)
+        volumeKg:
+          type: number
+          description: Total volume lifted in kg on this date
+      required:
+        - date
+        - volumeKg
+
+    MostImprovedItem:
+      type: object
+      properties:
+        exercise:
+          type: string
+          description: Exercise name
+        firstDate:
+          type: string
+          description: Date of first recorded session (YYYY-MM-DD)
+        lastDate:
+          type: string
+          description: Date of most recent recorded session (YYYY-MM-DD)
+        firstAvgKg:
+          type: number
+          description: Average weight (kg) in the first session
+        lastAvgKg:
+          type: number
+          description: Average weight (kg) in the most recent session
+        pctGain:
+          type: number
+          description: Percentage gain from first to last session
+      required:
+        - exercise
+        - firstDate
+        - lastDate
+        - firstAvgKg
+        - lastAvgKg
+        - pctGain
 
     BodyMetric:
       type: object

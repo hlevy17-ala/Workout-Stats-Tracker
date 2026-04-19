@@ -288,46 +288,71 @@ export function useGetWorkoutsByExercise<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+export type GetWorkoutsByMuscleGroupParams = {
+  startDate?: string;
+  endDate?: string;
+};
+
 /**
  * Returns total weight lifted (kg) per muscle group grouped by workout date
  * @summary Get total weight by muscle group over time
  */
-export const getGetWorkoutsByMuscleGroupUrl = () => {
-  return `/api/workouts/by-muscle-group`;
+export const getGetWorkoutsByMuscleGroupUrl = (
+  params?: GetWorkoutsByMuscleGroupParams,
+) => {
+  const qs = params
+    ? Object.entries(params)
+        .filter(([, v]) => v != null)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
+        .join("&")
+    : "";
+  return qs
+    ? `/api/workouts/by-muscle-group?${qs}`
+    : `/api/workouts/by-muscle-group`;
 };
 
 export const getWorkoutsByMuscleGroup = async (
+  params?: GetWorkoutsByMuscleGroupParams,
   options?: RequestInit,
 ): Promise<MuscleGroupDataPoint[]> => {
-  return customFetch<MuscleGroupDataPoint[]>(getGetWorkoutsByMuscleGroupUrl(), {
-    ...options,
-    method: "GET",
-  });
+  return customFetch<MuscleGroupDataPoint[]>(
+    getGetWorkoutsByMuscleGroupUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
-export const getGetWorkoutsByMuscleGroupQueryKey = () => {
-  return [`/api/workouts/by-muscle-group`] as const;
+export const getGetWorkoutsByMuscleGroupQueryKey = (
+  params?: GetWorkoutsByMuscleGroupParams,
+) => {
+  return [`/api/workouts/by-muscle-group`, params] as const;
 };
 
 export const getGetWorkoutsByMuscleGroupQueryOptions = <
   TData = Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetWorkoutsByMuscleGroupParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getGetWorkoutsByMuscleGroupQueryKey();
+    queryOptions?.queryKey ?? getGetWorkoutsByMuscleGroupQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>
-  > = ({ signal }) => getWorkoutsByMuscleGroup({ signal, ...requestOptions });
+  > = ({ signal }) =>
+    getWorkoutsByMuscleGroup(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
@@ -348,15 +373,18 @@ export type GetWorkoutsByMuscleGroupQueryError = ErrorType<unknown>;
 export function useGetWorkoutsByMuscleGroup<
   TData = Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetWorkoutsByMuscleGroupQueryOptions(options);
+>(
+  params?: GetWorkoutsByMuscleGroupParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWorkoutsByMuscleGroup>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWorkoutsByMuscleGroupQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -1111,49 +1139,79 @@ export function useSetCalorieBurnGoal<
 
 // ─── Insights hooks ──────────────────────────────────────────────────────────
 
-export const getGetWorkoutHeatmapQueryKey = () => ["/api/workouts/heatmap"] as const;
+export type InsightsDateParams = {
+  startDate?: string;
+  endDate?: string;
+};
+
+function buildInsightsUrl(base: string, params?: InsightsDateParams): string {
+  if (!params) return base;
+  const qs = Object.entries(params)
+    .filter(([, v]) => v != null)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
+    .join("&");
+  return qs ? `${base}?${qs}` : base;
+}
+
+export const getGetWorkoutHeatmapQueryKey = (params?: InsightsDateParams) =>
+  ["/api/workouts/heatmap", params] as const;
 
 async function getWorkoutHeatmap(
+  params?: InsightsDateParams,
   options?: SecondParameter<typeof customFetch>,
   signal?: AbortSignal,
 ): Promise<WorkoutHeatmapData> {
-  return customFetch<WorkoutHeatmapData>(`/api/workouts/heatmap`, { ...options, signal });
+  return customFetch<WorkoutHeatmapData>(
+    buildInsightsUrl(`/api/workouts/heatmap`, params),
+    { ...options, signal },
+  );
 }
 
 export function useGetWorkoutHeatmap<
   TData = WorkoutHeatmapData,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseQueryOptions<WorkoutHeatmapData, TError, TData>;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> {
+>(
+  params?: InsightsDateParams,
+  options?: {
+    query?: UseQueryOptions<WorkoutHeatmapData, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> {
   const { query: queryOptions, request: requestOptions } = options ?? {};
-  const queryKey = queryOptions?.queryKey ?? getGetWorkoutHeatmapQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetWorkoutHeatmapQueryKey(params);
   const queryFn: QueryFunction<WorkoutHeatmapData> = ({ signal }) =>
-    getWorkoutHeatmap(requestOptions, signal);
+    getWorkoutHeatmap(params, requestOptions, signal);
   return useQuery({ queryKey, queryFn, ...queryOptions });
 }
 
-export const getGetMostImprovedQueryKey = () => ["/api/workouts/most-improved"] as const;
+export const getGetMostImprovedQueryKey = (params?: InsightsDateParams) =>
+  ["/api/workouts/most-improved", params] as const;
 
 async function getMostImproved(
+  params?: InsightsDateParams,
   options?: SecondParameter<typeof customFetch>,
   signal?: AbortSignal,
 ): Promise<MostImprovedData> {
-  return customFetch<MostImprovedData>(`/api/workouts/most-improved`, { ...options, signal });
+  return customFetch<MostImprovedData>(
+    buildInsightsUrl(`/api/workouts/most-improved`, params),
+    { ...options, signal },
+  );
 }
 
 export function useGetMostImproved<
   TData = MostImprovedData,
   TError = ErrorType<ErrorResponse>,
->(options?: {
-  query?: UseQueryOptions<MostImprovedData, TError, TData>;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> {
+>(
+  params?: InsightsDateParams,
+  options?: {
+    query?: UseQueryOptions<MostImprovedData, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> {
   const { query: queryOptions, request: requestOptions } = options ?? {};
-  const queryKey = queryOptions?.queryKey ?? getGetMostImprovedQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetMostImprovedQueryKey(params);
   const queryFn: QueryFunction<MostImprovedData> = ({ signal }) =>
-    getMostImproved(requestOptions, signal);
+    getMostImproved(params, requestOptions, signal);
   return useQuery({ queryKey, queryFn, ...queryOptions });
 }
 

@@ -235,13 +235,27 @@ router.get("/workouts/avg-weight-by-muscle-group", async (req, res): Promise<voi
 });
 
 router.get("/workouts/by-muscle-group", async (req, res): Promise<void> => {
-  const rows = await db
+  const startDate = typeof req.query.startDate === "string" ? req.query.startDate : null;
+  const endDate = typeof req.query.endDate === "string" ? req.query.endDate : null;
+
+  let query = db
     .select({
       date: workoutSetsTable.date,
       exercise: workoutSetsTable.exercise,
       totalKg: sql<number>`CAST(SUM(${workoutSetsTable.weightKg}::numeric * ${workoutSetsTable.reps}) AS float8)`,
     })
     .from(workoutSetsTable)
+    .$dynamic();
+
+  if (startDate && endDate) {
+    query = query.where(sql`${workoutSetsTable.date} >= ${startDate}::date AND ${workoutSetsTable.date} <= ${endDate}::date`);
+  } else if (startDate) {
+    query = query.where(sql`${workoutSetsTable.date} >= ${startDate}::date`);
+  } else if (endDate) {
+    query = query.where(sql`${workoutSetsTable.date} <= ${endDate}::date`);
+  }
+
+  const rows = await query
     .groupBy(workoutSetsTable.date, workoutSetsTable.exercise)
     .orderBy(workoutSetsTable.date);
 
@@ -294,13 +308,27 @@ router.get("/workouts/personal-records", async (_req, res): Promise<void> => {
   res.json(GetPersonalRecordsResponse.parse(records));
 });
 
-router.get("/workouts/heatmap", async (_req, res): Promise<void> => {
+router.get("/workouts/heatmap", async (req, res): Promise<void> => {
+  const startDate = typeof req.query.startDate === "string" ? req.query.startDate : null;
+  const endDate = typeof req.query.endDate === "string" ? req.query.endDate : null;
+
+  let whereClause: ReturnType<typeof sql>;
+  if (startDate && endDate) {
+    whereClause = sql`WHERE "date" >= ${startDate}::date AND "date" <= ${endDate}::date`;
+  } else if (startDate) {
+    whereClause = sql`WHERE "date" >= ${startDate}::date`;
+  } else if (endDate) {
+    whereClause = sql`WHERE "date" <= ${endDate}::date`;
+  } else {
+    whereClause = sql`WHERE 1=1`;
+  }
+
   const { rows } = await db.execute<{ date: string; volume_kg: number }>(sql`
     SELECT
       date,
       CAST(SUM(weight_kg::numeric * reps) AS float8) AS volume_kg
     FROM workout_sets
-    WHERE "date" >= CURRENT_DATE - INTERVAL '112 days'
+    ${whereClause}
     GROUP BY date
     ORDER BY date
   `);
@@ -308,14 +336,28 @@ router.get("/workouts/heatmap", async (_req, res): Promise<void> => {
   res.json(GetWorkoutHeatmapResponse.parse(rows.map((r) => ({ date: r.date, volumeKg: r.volume_kg }))));
 });
 
-router.get("/workouts/most-improved", async (_req, res): Promise<void> => {
-  const rows = await db
+router.get("/workouts/most-improved", async (req, res): Promise<void> => {
+  const startDate = typeof req.query.startDate === "string" ? req.query.startDate : null;
+  const endDate = typeof req.query.endDate === "string" ? req.query.endDate : null;
+
+  let query = db
     .select({
       date: workoutSetsTable.date,
       exercise: workoutSetsTable.exercise,
       avgWeightKg: sql<number>`CAST(AVG(${workoutSetsTable.weightKg}::numeric) AS float8)`,
     })
     .from(workoutSetsTable)
+    .$dynamic();
+
+  if (startDate && endDate) {
+    query = query.where(sql`${workoutSetsTable.date} >= ${startDate}::date AND ${workoutSetsTable.date} <= ${endDate}::date`);
+  } else if (startDate) {
+    query = query.where(sql`${workoutSetsTable.date} >= ${startDate}::date`);
+  } else if (endDate) {
+    query = query.where(sql`${workoutSetsTable.date} <= ${endDate}::date`);
+  }
+
+  const rows = await query
     .groupBy(workoutSetsTable.date, workoutSetsTable.exercise)
     .orderBy(workoutSetsTable.date);
 
