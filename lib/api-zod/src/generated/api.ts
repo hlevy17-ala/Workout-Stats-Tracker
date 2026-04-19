@@ -199,7 +199,7 @@ export const LogWorkoutExerciseItem = zod.object({
 });
 
 export const LogWorkoutBody = zod.object({
-  date: zod.string().describe("Workout date (YYYY-MM-DD)"),
+  date: zod.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD").describe("Workout date (YYYY-MM-DD)"),
   exercises: zod.array(LogWorkoutExerciseItem).min(1),
 });
 
