@@ -277,17 +277,25 @@ components:
       properties:
         inserted:
           type: integer
-          description: Number of new rows inserted
+          description: Number of set rows inserted
         skipped:
           type: integer
-          description: Number of duplicate rows skipped
+          description: Number of rows skipped (cardio, warmup, zero weight, etc.)
         total:
           type: integer
-          description: Total rows parsed (excluding cardio/warmup)
+          description: Total rows parsed
+        sessions:
+          type: integer
+          description: Number of unique workout dates imported
+        exercises:
+          type: integer
+          description: Number of unique exercise names imported
       required:
         - inserted
         - skipped
         - total
+        - sessions
+        - exercises
 
     ExerciseDataPoint:
       type: object
