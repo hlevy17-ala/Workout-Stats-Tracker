@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { CheckCircle2, FileUp, RotateCcw, Dumbbell, ArrowLeft, AlertCircle } from "lucide-react";
+import { CheckCircle2, FileUp, RotateCcw, Dumbbell, ArrowLeft, AlertCircle, Download, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,7 +27,28 @@ type ColumnMapping = {
   multiplier: string;
 };
 
-type UploadResult = { inserted: number; total: number; fileName: string };
+type UploadResult = { inserted: number; skipped: number; total: number; sessions: number; exercises: number; fileName: string };
+
+const SAMPLE_CSV = `Date,Exercise Name,Reps,Weight,Is Warmup
+2025-01-06,Machine Bench Press,10,60,false
+2025-01-06,Machine Bench Press,8,65,false
+2025-01-06,Lat Pulldown,12,50,false
+2025-01-06,Machine Bicep Curl,12,20,false
+2025-01-08,Machine Shoulder Press,10,40,false
+2025-01-08,Machine Hip Adductor,15,50,false
+2025-01-10,Machine Bench Press,8,67.5,false
+2025-01-10,Lat Pulldown,10,55,false
+`;
+
+function downloadSampleCsv() {
+  const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "sample-workout.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const NONE = "__none__";
 
@@ -129,7 +150,7 @@ export function CsvUpload() {
       { data: { file, mapping: JSON.stringify(mappingPayload) } },
       {
         onSuccess: (res) => {
-          setResult({ inserted: res.inserted, total: res.total, fileName });
+          setResult({ inserted: res.inserted, skipped: res.skipped, total: res.total, sessions: res.sessions, exercises: res.exercises, fileName });
           setFile(null);
           setStep("done");
           queryClient.invalidateQueries({ queryKey: getGetWorkoutsByExerciseQueryKey() });
@@ -173,18 +194,32 @@ export function CsvUpload() {
               <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
             <div className="text-center space-y-1">
-              <h3 className="text-xl font-bold text-foreground">Report Processed</h3>
+              <h3 className="text-xl font-bold text-foreground">Import Complete</h3>
               <p className="text-muted-foreground text-sm">{result.fileName}</p>
             </div>
-            <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-              <div className="bg-muted/40 rounded-xl p-4 text-center border border-border">
-                <p className="text-3xl font-black text-primary">{result.inserted.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">Sets Imported</p>
+            <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
+              <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
+                <p className="text-2xl font-black text-primary tabular-nums">{result.inserted.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider">Sets</p>
               </div>
-              <div className="bg-muted/40 rounded-xl p-4 text-center border border-border">
-                <Dumbbell className="w-6 h-6 mx-auto text-chart-2 mb-1" />
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Charts Updated</p>
+              <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
+                <p className="text-2xl font-black text-chart-2 tabular-nums">{result.sessions.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider">Sessions</p>
               </div>
+              <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
+                <p className="text-2xl font-black text-chart-3 tabular-nums">{result.exercises.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider">Exercises</p>
+              </div>
+            </div>
+            {result.skipped > 0 && (
+              <div className="flex items-center gap-2 rounded-lg border border-muted bg-muted/20 px-4 py-2 text-sm text-muted-foreground w-full max-w-sm justify-center">
+                <Info className="w-4 h-4 shrink-0" />
+                <span>{result.skipped.toLocaleString()} row{result.skipped !== 1 ? "s" : ""} skipped (cardio, warmup, or zero-weight sets)</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 w-full max-w-sm justify-center">
+              <Dumbbell className="w-4 h-4 text-chart-2" />
+              <p className="text-xs text-muted-foreground">All charts and insights have been updated</p>
             </div>
             <Button variant="outline" onClick={handleReset} className="gap-2">
               <RotateCcw className="w-4 h-4" />
@@ -295,31 +330,61 @@ export function CsvUpload() {
             </div>
           </div>
         ) : (
-          <div
-            className={`relative border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer ${
-              dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/20 hover:border-primary/50"
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              onChange={handleChange}
-              className="hidden"
-              data-testid="input-csv-upload"
-            />
-            <div className="flex flex-col items-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                <FileUp className="w-8 h-8" />
+          <div className="space-y-4">
+            <div
+              className={`relative border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+                dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/20 hover:border-primary/50"
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleChange}
+                className="hidden"
+                data-testid="input-csv-upload"
+              />
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                  <FileUp className="w-8 h-8" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="font-medium text-foreground">Click or drag a CSV file here</p>
+                  <p className="text-sm text-muted-foreground">Any CSV format — you'll map the columns in the next step</p>
+                </div>
               </div>
-              <div className="text-center space-y-1">
-                <p className="font-medium text-foreground">Click or drag a CSV file here</p>
-                <p className="text-sm text-muted-foreground">Any CSV format — you'll map the columns in the next step</p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="space-y-1 flex-1">
+                  <p className="text-sm font-medium">Works out of the box with</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Strong", "Hevy", "FitNotes"].map((app) => (
+                      <Badge key={app} variant="secondary" className="text-xs">{app}</Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground pt-0.5">
+                    Needs columns for: date, exercise name, reps, weight. Warmup and multiplier columns are optional.
+                  </p>
+                </div>
+              </div>
+              <div className="border-t border-border pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-xs h-8 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => { e.stopPropagation(); downloadSampleCsv(); }}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download sample CSV
+                </Button>
               </div>
             </div>
           </div>

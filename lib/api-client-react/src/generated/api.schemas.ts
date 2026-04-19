@@ -10,12 +10,16 @@ export interface HealthStatus {
 }
 
 export interface UploadResult {
-  /** Number of new rows inserted */
+  /** Number of set rows inserted */
   inserted: number;
-  /** Number of duplicate rows skipped */
+  /** Number of rows skipped (cardio, warmup, zero weight, etc.) */
   skipped: number;
-  /** Total rows parsed (excluding cardio/warmup) */
+  /** Total rows parsed */
   total: number;
+  /** Number of unique workout dates imported */
+  sessions: number;
+  /** Number of unique exercise names imported */
+  exercises: number;
 }
 
 export interface ExerciseDataPoint {

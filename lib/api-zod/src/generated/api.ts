@@ -25,9 +25,11 @@ export const UploadWorkoutCsvBody = zod.object({
 });
 
 export const UploadWorkoutCsvResponse = zod.object({
-  inserted: zod.number().describe("Number of new rows inserted"),
-  skipped: zod.number().describe("Number of duplicate rows skipped"),
-  total: zod.number().describe("Total rows parsed (excluding cardio\/warmup)"),
+  inserted: zod.number().describe("Number of set rows inserted"),
+  skipped: zod.number().describe("Number of rows skipped (cardio, warmup, zero weight, etc.)"),
+  total: zod.number().describe("Total rows parsed"),
+  sessions: zod.number().describe("Number of unique workout dates imported"),
+  exercises: zod.number().describe("Number of unique exercise names imported"),
 });
 
 /**

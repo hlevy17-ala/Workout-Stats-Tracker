@@ -125,6 +125,7 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
   }
 
   const toInsert: { date: string; exercise: string; reps: number; weightKg: string }[] = [];
+  let skipped = 0;
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(",");
@@ -136,11 +137,11 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
     const isWarmup = warmupIdx >= 0 ? cols[warmupIdx]?.trim().toLowerCase() === "true" : false;
     const multiplier = multiplierIdx >= 0 ? parseFloat(cols[multiplierIdx]?.trim() ?? "1") : 1;
 
-    if (CARDIO_EXERCISES.has(exercise)) continue;
-    if (isWarmup) continue;
-    if (multiplier === 0) continue;
-    if (weightKg <= 0) continue;
-    if (!rawDate || !exercise) continue;
+    if (CARDIO_EXERCISES.has(exercise)) { skipped++; continue; }
+    if (isWarmup) { skipped++; continue; }
+    if (multiplier === 0) { skipped++; continue; }
+    if (weightKg <= 0) { skipped++; continue; }
+    if (!rawDate || !exercise) { skipped++; continue; }
 
     const date = parseDate(rawDate);
 
@@ -157,6 +158,9 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
     return;
   }
 
+  const uniqueSessions = new Set(toInsert.map((r) => r.date)).size;
+  const uniqueExercises = new Set(toInsert.map((r) => r.exercise)).size;
+
   const CHUNK_SIZE = 1000;
 
   await db.transaction(async (tx) => {
@@ -167,9 +171,9 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
   });
 
   const inserted = toInsert.length;
-  req.log.info({ inserted, total: inserted }, "Workout CSV upload complete");
+  req.log.info({ inserted, skipped, sessions: uniqueSessions, exercises: uniqueExercises }, "Workout CSV upload complete");
 
-  res.json(UploadWorkoutCsvResponse.parse({ inserted, skipped: 0, total: inserted }));
+  res.json(UploadWorkoutCsvResponse.parse({ inserted, skipped, total: inserted + skipped, sessions: uniqueSessions, exercises: uniqueExercises }));
 });
 
 router.get("/workouts/by-exercise", async (req, res): Promise<void> => {
