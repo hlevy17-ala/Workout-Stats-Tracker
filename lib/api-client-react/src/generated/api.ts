@@ -1334,3 +1334,34 @@ export function useSetWidgetVisibility<
   const mutationOptions = getSetWidgetVisibilityMutationOptions(options);
   return useMutation(mutationOptions);
 }
+
+// ─── Insights Date Range ──────────────────────────────────────────────────────
+
+export interface InsightsDateRange {
+  preset: "4w" | "3m" | "6m" | "1y" | "custom" | null;
+  customStart: string;
+  customEnd: string;
+}
+
+export const getGetInsightsDateRangeUrl = () => `/api/settings/insights-date-range`;
+
+export const getInsightsDateRange = async (
+  options?: RequestInit,
+): Promise<InsightsDateRange | null> => {
+  return customFetch<InsightsDateRange | null>(getGetInsightsDateRangeUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const setInsightsDateRange = async (
+  data: InsightsDateRange,
+  options?: RequestInit,
+): Promise<InsightsDateRange> => {
+  return customFetch<InsightsDateRange>(getGetInsightsDateRangeUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(data),
+  });
+};

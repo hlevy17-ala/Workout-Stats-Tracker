@@ -13,7 +13,7 @@ import { BodyCompositionWidget } from "./BodyCompositionWidget";
 import { CalorieAdherenceWidget } from "./CalorieAdherenceWidget";
 import { PersonalRecordsTimelineWidget } from "./PersonalRecordsTimelineWidget";
 import type { InsightsDateParams } from "@workspace/api-client-react";
-import { getWidgetVisibility, getGetWidgetVisibilityUrl } from "@workspace/api-client-react";
+import { getWidgetVisibility, getGetWidgetVisibilityUrl, getInsightsDateRange, setInsightsDateRange } from "@workspace/api-client-react";
 
 type WidgetId =
   | "weeklySnapshot"
@@ -131,6 +131,7 @@ function saveDateRange(preset: PresetId | null, customStart: string, customEnd: 
   try {
     localStorage.setItem(DATE_RANGE_STORAGE_KEY, JSON.stringify({ preset, customStart, customEnd }));
   } catch {}
+  setInsightsDateRange({ preset, customStart, customEnd }).catch(() => {});
 }
 
 async function saveVisibilityToServer(visibility: Record<WidgetId, boolean>) {
@@ -151,6 +152,8 @@ export function InsightsTab() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const serverLoaded = useRef(false);
   const dirtyAfterMount = useRef(false);
+  const dateRangeServerLoaded = useRef(false);
+  const dateRangeDirtyAfterMount = useRef(false);
 
   useEffect(() => {
     if (serverLoaded.current) return;
@@ -162,6 +165,23 @@ export function InsightsTab() {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch {}
     }).catch(() => {
       serverLoaded.current = true;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (dateRangeServerLoaded.current) return;
+    getInsightsDateRange().then((serverData) => {
+      dateRangeServerLoaded.current = true;
+      if (!serverData || dateRangeDirtyAfterMount.current) return;
+      const preset = serverData.preset && VALID_PRESETS.includes(serverData.preset) ? serverData.preset : null;
+      const start = typeof serverData.customStart === "string" ? serverData.customStart : "";
+      const end = typeof serverData.customEnd === "string" ? serverData.customEnd : "";
+      setSelectedPreset(preset);
+      setCustomStart(start);
+      setCustomEnd(end);
+      try { localStorage.setItem(DATE_RANGE_STORAGE_KEY, JSON.stringify({ preset, customStart: start, customEnd: end })); } catch {}
+    }).catch(() => {
+      dateRangeServerLoaded.current = true;
     });
   }, []);
 
@@ -193,12 +213,14 @@ export function InsightsTab() {
     : "All time";
 
   const handlePresetClick = (preset: PresetId) => {
+    dateRangeDirtyAfterMount.current = true;
     setSelectedPreset(preset);
     saveDateRange(preset, customStart, customEnd);
     if (preset !== "custom") setDatePickerOpen(false);
   };
 
   const handleClearRange = () => {
+    dateRangeDirtyAfterMount.current = true;
     setSelectedPreset(null);
     setCustomStart("");
     setCustomEnd("");
@@ -258,7 +280,7 @@ export function InsightsTab() {
                     <Input
                       type="date"
                       value={customStart}
-                      onChange={(e) => { setCustomStart(e.target.value); saveDateRange("custom", e.target.value, customEnd); }}
+                      onChange={(e) => { dateRangeDirtyAfterMount.current = true; setCustomStart(e.target.value); saveDateRange("custom", e.target.value, customEnd); }}
                       className="h-8 text-sm"
                     />
                   </div>
@@ -267,7 +289,7 @@ export function InsightsTab() {
                     <Input
                       type="date"
                       value={customEnd}
-                      onChange={(e) => { setCustomEnd(e.target.value); saveDateRange("custom", customStart, e.target.value); }}
+                      onChange={(e) => { dateRangeDirtyAfterMount.current = true; setCustomEnd(e.target.value); saveDateRange("custom", customStart, e.target.value); }}
                       className="h-8 text-sm"
                     />
                   </div>

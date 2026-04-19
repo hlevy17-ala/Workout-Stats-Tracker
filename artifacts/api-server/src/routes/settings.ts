@@ -9,6 +9,7 @@ import {
   SetCalorieBurnGoalBody,
   SetCalorieBurnGoalResponse,
   SetWidgetVisibilityBody,
+  SetInsightsDateRangeBody,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -17,6 +18,7 @@ const DEFAULT_USER_ID = "default";
 const CALORIE_GOAL_KEY = "calorie_daily_goal";
 const CALORIE_BURN_GOAL_KEY = "calorie_burn_goal";
 const WIDGET_VISIBILITY_KEY = "insights_widget_visibility";
+const INSIGHTS_DATE_RANGE_KEY = "insights_date_range";
 
 function userKeyFilter(key: string) {
   return and(
@@ -109,6 +111,43 @@ router.put("/settings/widget-visibility", async (req, res): Promise<void> => {
   const [row] = await db
     .insert(userSettingsTable)
     .values({ userId: DEFAULT_USER_ID, key: WIDGET_VISIBILITY_KEY, value: JSON.stringify(parsed.data) })
+    .onConflictDoUpdate({
+      target: [userSettingsTable.userId, userSettingsTable.key],
+      set: { value: JSON.stringify(parsed.data) },
+    })
+    .returning();
+
+  res.json(JSON.parse(row.value));
+});
+
+router.get("/settings/insights-date-range", async (_req, res): Promise<void> => {
+  const [row] = await db
+    .select()
+    .from(userSettingsTable)
+    .where(userKeyFilter(INSIGHTS_DATE_RANGE_KEY));
+
+  if (!row) {
+    res.json(null);
+    return;
+  }
+
+  try {
+    res.json(JSON.parse(row.value));
+  } catch {
+    res.json(null);
+  }
+});
+
+router.put("/settings/insights-date-range", async (req, res): Promise<void> => {
+  const parsed = SetInsightsDateRangeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [row] = await db
+    .insert(userSettingsTable)
+    .values({ userId: DEFAULT_USER_ID, key: INSIGHTS_DATE_RANGE_KEY, value: JSON.stringify(parsed.data) })
     .onConflictDoUpdate({
       target: [userSettingsTable.userId, userSettingsTable.key],
       set: { value: JSON.stringify(parsed.data) },

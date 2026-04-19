@@ -229,3 +229,17 @@ export const GetWidgetVisibilityResponse = zod.object(widgetVisibilityShape).nul
 export const SetWidgetVisibilityBody = zod.object(widgetVisibilityShape);
 
 export const SetWidgetVisibilityResponse = zod.object(widgetVisibilityShape);
+
+const insightsDateRangeShape = {
+  preset: zod.enum(["4w", "3m", "6m", "1y", "custom"]).nullable(),
+  customStart: zod.string(),
+  customEnd: zod.string(),
+};
+
+export const InsightsDateRangeSchema = zod.object(insightsDateRangeShape);
+
+export const GetInsightsDateRangeResponse = zod.object(insightsDateRangeShape).nullable();
+
+export const SetInsightsDateRangeBody = zod.object(insightsDateRangeShape);
+
+export const SetInsightsDateRangeResponse = zod.object(insightsDateRangeShape);
