@@ -367,9 +367,11 @@ router.get("/workouts/most-improved", async (req, res): Promise<void> => {
     byExercise.get(row.exercise)!.push({ date: row.date, avgWeightKg: Number(row.avgWeightKg) });
   }
 
+  const minSessions = Math.max(2, parseInt(String(req.query.minSessions ?? "3"), 10) || 3);
+
   const result: { exercise: string; firstDate: string; lastDate: string; firstAvgKg: number; lastAvgKg: number; pctGain: number }[] = [];
   for (const [exercise, sessions] of byExercise) {
-    if (sessions.length < 2) continue;
+    if (sessions.length < minSessions) continue;
     const first = sessions[0];
     const last = sessions[sessions.length - 1];
     if (first.avgWeightKg <= 0) continue;

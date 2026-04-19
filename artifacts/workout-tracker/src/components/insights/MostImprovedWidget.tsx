@@ -18,7 +18,7 @@ export function MostImprovedWidget({ dateParams }: MostImprovedWidgetProps) {
     <Card className="flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">Most Improved</CardTitle>
-        <p className="text-xs text-muted-foreground">First session vs. most recent avg weight</p>
+        <p className="text-xs text-muted-foreground">First vs. most recent avg weight · min 3 sessions</p>
       </CardHeader>
       <CardContent className="flex-1">
         {isLoading ? (
@@ -35,6 +35,7 @@ export function MostImprovedWidget({ dateParams }: MostImprovedWidgetProps) {
               const isGain = item.pctGain >= 0;
               const firstLbs = Math.round(item.firstAvgKg * KG_TO_LBS * 10) / 10;
               const lastLbs = Math.round(item.lastAvgKg * KG_TO_LBS * 10) / 10;
+              const absGainLbs = Math.round((item.lastAvgKg - item.firstAvgKg) * KG_TO_LBS * 10) / 10;
               return (
                 <div key={item.exercise} className="flex items-center gap-3">
                   <span className="text-xs font-bold text-muted-foreground w-4 tabular-nums">{i + 1}</span>
@@ -46,10 +47,10 @@ export function MostImprovedWidget({ dateParams }: MostImprovedWidgetProps) {
                   </div>
                   <Badge
                     variant={isGain ? "default" : "destructive"}
-                    className={`tabular-nums font-bold shrink-0 ${isGain ? "bg-green-500/20 text-green-500 hover:bg-green-500/20 border-green-500/30" : "bg-red-500/20 text-red-400 hover:bg-red-500/20 border-red-500/30"}`}
+                    className={`tabular-nums font-bold shrink-0 text-right ${isGain ? "bg-green-500/20 text-green-500 hover:bg-green-500/20 border-green-500/30" : "bg-red-500/20 text-red-400 hover:bg-red-500/20 border-red-500/30"}`}
                   >
                     {isGain ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                    {item.pctGain > 0 ? "+" : ""}{item.pctGain}%
+                    {absGainLbs > 0 ? "+" : ""}{absGainLbs} lbs · {item.pctGain > 0 ? "+" : ""}{item.pctGain}%
                   </Badge>
                 </div>
               );

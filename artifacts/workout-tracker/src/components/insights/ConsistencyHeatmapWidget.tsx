@@ -70,10 +70,14 @@ function buildGrid(
 function getMonthLabels(weeks: ReturnType<typeof buildGrid>) {
   const labels: { weekIdx: number; label: string }[] = [];
   let lastMonth = -1;
+  let lastLabelWeek = -4;
   for (let w = 0; w < weeks.length; w++) {
     const [y, m] = weeks[w][0].date.split("-").map(Number);
     if (m !== lastMonth) {
-      labels.push({ weekIdx: w, label: new Date(y, m - 1, 1).toLocaleString("default", { month: "short" }) });
+      if (w - lastLabelWeek >= 3) {
+        labels.push({ weekIdx: w, label: new Date(y, m - 1, 1).toLocaleString("default", { month: "short" }) });
+        lastLabelWeek = w;
+      }
       lastMonth = m;
     }
   }
@@ -150,15 +154,15 @@ export function ConsistencyHeatmapWidget({ dateParams }: ConsistencyHeatmapWidge
                             style={style}
                           />
                         </TooltipTrigger>
-                        {!cell.isFuture && (
-                          <TooltipContent side="top" className="text-xs">
-                            <p className="font-medium">{formatDate(cell.date)}</p>
-                            {hasData
+                        <TooltipContent side="top" className="text-xs">
+                          <p className="font-medium">{formatDate(cell.date)}</p>
+                          {cell.isFuture
+                            ? <p className="text-muted-foreground">Future</p>
+                            : hasData
                               ? <p>{Math.round((cell.volumeKg! * KG_TO_LBS)).toLocaleString()} lbs lifted</p>
                               : <p className="text-muted-foreground">Rest day</p>
-                            }
-                          </TooltipContent>
-                        )}
+                          }
+                        </TooltipContent>
                       </Tooltip>
                     );
                   })}
