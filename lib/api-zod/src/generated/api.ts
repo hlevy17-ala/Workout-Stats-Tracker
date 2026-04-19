@@ -21,6 +21,7 @@ export const HealthCheckResponse = zod.object({
  */
 export const UploadWorkoutCsvBody = zod.object({
   file: zod.any(),
+  mapping: zod.string().describe("JSON-encoded column mapping"),
 });
 
 export const UploadWorkoutCsvResponse = zod.object({

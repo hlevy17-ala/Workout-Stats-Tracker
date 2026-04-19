@@ -89,16 +89,39 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
     return;
   }
 
+  // Parse column mapping from request body
+  let mapping: {
+    date: string;
+    exercise: string;
+    reps: string;
+    weight: string;
+    weightUnit: "kg" | "lbs";
+    isWarmup?: string;
+    multiplier?: string;
+  };
+  try {
+    mapping = JSON.parse(req.body?.mapping ?? "{}");
+  } catch {
+    res.status(400).json({ error: "Invalid column mapping — could not parse JSON" });
+    return;
+  }
+
+  if (!mapping.date || !mapping.exercise || !mapping.reps || !mapping.weight) {
+    res.status(400).json({ error: "Column mapping is incomplete — date, exercise, reps, and weight are required" });
+    return;
+  }
+
   const header = lines[0].split(",").map((h) => h.trim());
-  const dateIdx = header.indexOf("Date");
-  const exerciseIdx = header.indexOf("Exercise");
-  const repsIdx = header.indexOf("Reps");
-  const weightIdx = header.indexOf("Weight(kg)");
-  const warmupIdx = header.indexOf("isWarmup");
-  const multiplierIdx = header.indexOf("multiplier");
+  const dateIdx = header.indexOf(mapping.date);
+  const exerciseIdx = header.indexOf(mapping.exercise);
+  const repsIdx = header.indexOf(mapping.reps);
+  const weightIdx = header.indexOf(mapping.weight);
+  const warmupIdx = mapping.isWarmup ? header.indexOf(mapping.isWarmup) : -1;
+  const multiplierIdx = mapping.multiplier ? header.indexOf(mapping.multiplier) : -1;
+  const weightUnit = mapping.weightUnit ?? "kg";
 
   if (dateIdx < 0 || exerciseIdx < 0 || repsIdx < 0 || weightIdx < 0) {
-    res.status(400).json({ error: "CSV format not recognized — missing required columns" });
+    res.status(400).json({ error: "One or more mapped columns were not found in the CSV header row" });
     return;
   }
 
@@ -109,8 +132,9 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
     const rawDate = cols[dateIdx]?.trim() ?? "";
     const exercise = cols[exerciseIdx]?.trim() ?? "";
     const reps = parseInt(cols[repsIdx]?.trim() ?? "0", 10);
-    const weightKg = parseFloat(cols[weightIdx]?.trim() ?? "0");
-    const isWarmup = cols[warmupIdx]?.trim().toLowerCase() === "true";
+    const weightRaw = parseFloat(cols[weightIdx]?.trim() ?? "0");
+    const weightKg = weightUnit === "lbs" ? weightRaw / 2.20462 : weightRaw;
+    const isWarmup = warmupIdx >= 0 ? cols[warmupIdx]?.trim().toLowerCase() === "true" : false;
     const multiplier = multiplierIdx >= 0 ? parseFloat(cols[multiplierIdx]?.trim() ?? "1") : 1;
 
     if (CARDIO_EXERCISES.has(exercise)) continue;
@@ -127,6 +151,11 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
       reps,
       weightKg: weightKg.toFixed(6),
     });
+  }
+
+  if (toInsert.length === 0) {
+    res.status(400).json({ error: "No valid rows found after applying your column mapping. Your existing data was not changed." });
+    return;
   }
 
   const CHUNK_SIZE = 1000;

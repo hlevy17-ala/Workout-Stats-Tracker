@@ -133,6 +133,7 @@ export const uploadWorkoutCsv = async (
 ): Promise<UploadResult> => {
   const formData = new FormData();
   formData.append(`file`, uploadWorkoutCsvBody.file);
+  formData.append(`mapping`, uploadWorkoutCsvBody.mapping);
 
   return customFetch<UploadResult>(getUploadWorkoutCsvUrl(), {
     ...options,

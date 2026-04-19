@@ -123,4 +123,5 @@ export interface ErrorResponse {
 
 export type UploadWorkoutCsvBody = {
   file: Blob;
+  mapping: string;
 };
