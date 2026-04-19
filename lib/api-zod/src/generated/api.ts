@@ -191,6 +191,22 @@ export const CreateCalorieLogBody = zod.object({
   caloriesBurned: zod.number().nullish().describe("Calories burned from exercise"),
 });
 
+export const LogWorkoutExerciseItem = zod.object({
+  exercise: zod.string().min(1).describe("Exercise name"),
+  weightLbs: zod.number().positive().describe("Weight per set in lbs"),
+  reps: zod.number().int().positive().describe("Reps per set"),
+  sets: zod.number().int().positive().describe("Number of identical sets"),
+});
+
+export const LogWorkoutBody = zod.object({
+  date: zod.string().describe("Workout date (YYYY-MM-DD)"),
+  exercises: zod.array(LogWorkoutExerciseItem).min(1),
+});
+
+export const LogWorkoutResponse = zod.object({
+  inserted: zod.number().describe("Number of set rows inserted"),
+});
+
 export const GetWorkoutHeatmapResponseItem = zod.object({
   date: zod.string().describe("Date in YYYY-MM-DD format"),
   volumeKg: zod.number().describe("Total volume (reps × weight) in kg"),

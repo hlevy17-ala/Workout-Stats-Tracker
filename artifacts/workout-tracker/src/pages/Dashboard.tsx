@@ -1,13 +1,18 @@
-import { Dumbbell, Activity, Scale, Upload, Shield, Flame, BarChart2 } from "lucide-react";
+import { useState } from "react";
+import { Dumbbell, Activity, Scale, Upload, Shield, Flame, BarChart2, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { CsvUpload } from "@/components/CsvUpload";
 import { ExerciseProgress } from "@/components/ExerciseProgress";
 import { MuscleGroupProgress } from "@/components/MuscleGroupProgress";
 import { BodyMetrics } from "@/components/BodyMetrics";
 import { CalorieTracker } from "@/components/CalorieTracker";
 import { InsightsTab } from "@/components/insights/InsightsTab";
+import { LogWorkoutModal } from "@/components/LogWorkoutModal";
 
 export default function Dashboard() {
+  const [logOpen, setLogOpen] = useState(false);
+
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col">
       <header className="border-b border-border bg-card">
@@ -16,8 +21,19 @@ export default function Dashboard() {
             <Shield className="w-6 h-6 text-primary" />
             <span className="font-sans font-extrabold text-xl tracking-widest uppercase text-foreground">Harry's Lifestyle Tracker</span>
           </div>
+          <Button
+            onClick={() => setLogOpen(true)}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2"
+            size="sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Log Workout</span>
+            <span className="sm:hidden">Log</span>
+          </Button>
         </div>
       </header>
+
+      <LogWorkoutModal open={logOpen} onClose={() => setLogOpen(false)} />
 
       <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-8 space-y-8">
         <Tabs defaultValue="insights" className="w-full">

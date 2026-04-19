@@ -160,3 +160,25 @@ export interface WidgetVisibility {
   calorieAdherence: boolean;
   prTimeline: boolean;
 }
+
+export type LogWorkoutExerciseItem = {
+  /** Exercise name */
+  exercise: string;
+  /** Weight per set in lbs */
+  weightLbs: number;
+  /** Reps per set */
+  reps: number;
+  /** Number of identical sets */
+  sets: number;
+};
+
+export type LogWorkoutBody = {
+  /** Workout date (YYYY-MM-DD) */
+  date: string;
+  exercises: LogWorkoutExerciseItem[];
+};
+
+export type LogWorkoutResult = {
+  /** Number of set rows inserted */
+  inserted: number;
+};

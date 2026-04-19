@@ -28,6 +28,8 @@ import type {
   ErrorResponse,
   ExerciseDataPoint,
   HealthStatus,
+  LogWorkoutBody,
+  LogWorkoutResult,
   MostImprovedData,
   MuscleGroupDataPoint,
   PersonalRecord,
@@ -1365,3 +1367,67 @@ export const setInsightsDateRange = async (
     body: JSON.stringify(data),
   });
 };
+
+// ─── Manual Workout Log ───────────────────────────────────────────────────────
+
+export const getLogWorkoutUrl = () => `/api/workouts/log`;
+
+export const logWorkout = async (
+  body: LogWorkoutBody,
+  options?: RequestInit,
+): Promise<LogWorkoutResult> => {
+  return customFetch<LogWorkoutResult>(getLogWorkoutUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+};
+
+export const getLogWorkoutMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logWorkout>>,
+    TError,
+    { data: LogWorkoutBody },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logWorkout>>,
+  TError,
+  { data: LogWorkoutBody },
+  TContext
+> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  return {
+    mutationFn: async ({ data }) => logWorkout(data, requestOptions),
+    ...mutationOptions,
+  };
+};
+
+export type LogWorkoutMutationResult = NonNullable<Awaited<ReturnType<typeof logWorkout>>>;
+export type LogWorkoutMutationBody = LogWorkoutBody;
+export type LogWorkoutMutationError = ErrorType<ErrorResponse>;
+
+export function useLogWorkout<
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logWorkout>>,
+    TError,
+    { data: LogWorkoutBody },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof logWorkout>>,
+  TError,
+  { data: LogWorkoutBody },
+  TContext
+> {
+  return useMutation(getLogWorkoutMutationOptions(options));
+}

@@ -13,6 +13,8 @@ import {
   GetWorkoutHeatmapResponse,
   GetMostImprovedResponse,
   GetPersonalRecordsTimelineResponse,
+  LogWorkoutBody,
+  LogWorkoutResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -174,6 +176,42 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
   req.log.info({ inserted, skipped, sessions: uniqueSessions, exercises: uniqueExercises }, "Workout CSV upload complete");
 
   res.json(UploadWorkoutCsvResponse.parse({ inserted, skipped, total: inserted + skipped, sessions: uniqueSessions, exercises: uniqueExercises }));
+});
+
+router.post("/workouts/log", async (req, res): Promise<void> => {
+  const parsed = LogWorkoutBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request body", details: parsed.error.issues });
+    return;
+  }
+
+  const { date, exercises } = parsed.data;
+  const KG_TO_LBS = 2.20462;
+
+  const toInsert: { date: string; exercise: string; reps: number; weightKg: string }[] = [];
+  for (const ex of exercises) {
+    for (let i = 0; i < ex.sets; i++) {
+      toInsert.push({
+        date,
+        exercise: ex.exercise.trim(),
+        reps: ex.reps,
+        weightKg: (ex.weightLbs / KG_TO_LBS).toFixed(6),
+      });
+    }
+  }
+
+  if (toInsert.length === 0) {
+    res.status(400).json({ error: "No valid sets to insert" });
+    return;
+  }
+
+  const CHUNK_SIZE = 1000;
+  for (let i = 0; i < toInsert.length; i += CHUNK_SIZE) {
+    await db.insert(workoutSetsTable).values(toInsert.slice(i, i + CHUNK_SIZE));
+  }
+
+  req.log.info({ inserted: toInsert.length, date }, "Manual workout log saved");
+  res.json(LogWorkoutResponse.parse({ inserted: toInsert.length }));
 });
 
 router.get("/workouts/by-exercise", async (req, res): Promise<void> => {
