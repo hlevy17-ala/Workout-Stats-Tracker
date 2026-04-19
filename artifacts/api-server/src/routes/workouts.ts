@@ -367,21 +367,24 @@ router.get("/workouts/most-improved", async (req, res): Promise<void> => {
     byExercise.get(row.exercise)!.push({ date: row.date, avgWeightKg: Number(row.avgWeightKg) });
   }
 
-  const minSessions = Math.max(2, parseInt(String(req.query.minSessions ?? "3"), 10) || 3);
+  const minSessions = Math.max(3, parseInt(String(req.query.minSessions ?? "3"), 10) || 3);
+  const KG_TO_LBS = 2.20462;
 
-  const result: { exercise: string; firstDate: string; lastDate: string; firstAvgKg: number; lastAvgKg: number; pctGain: number }[] = [];
+  const result: { exercise: string; firstDate: string; lastDate: string; firstAvgKg: number; lastAvgKg: number; absGainLbs: number; pctGain: number }[] = [];
   for (const [exercise, sessions] of byExercise) {
     if (sessions.length < minSessions) continue;
     const first = sessions[0];
     const last = sessions[sessions.length - 1];
     if (first.avgWeightKg <= 0) continue;
     const pctGain = ((last.avgWeightKg - first.avgWeightKg) / first.avgWeightKg) * 100;
+    const absGainLbs = Math.round((last.avgWeightKg - first.avgWeightKg) * KG_TO_LBS * 10) / 10;
     result.push({
       exercise,
       firstDate: first.date,
       lastDate: last.date,
       firstAvgKg: Math.round(first.avgWeightKg * 100) / 100,
       lastAvgKg: Math.round(last.avgWeightKg * 100) / 100,
+      absGainLbs,
       pctGain: Math.round(pctGain * 10) / 10,
     });
   }

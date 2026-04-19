@@ -135,6 +135,7 @@ export type MostImprovedItem = {
   lastDate: string;
   firstAvgKg: number;
   lastAvgKg: number;
+  absGainLbs: number;
   pctGain: number;
 };
 export type MostImprovedData = MostImprovedItem[];

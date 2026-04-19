@@ -201,6 +201,7 @@ export const GetMostImprovedItem = zod.object({
   lastDate: zod.string(),
   firstAvgKg: zod.number(),
   lastAvgKg: zod.number(),
+  absGainLbs: zod.number().describe("Absolute gain in lbs (lastAvgKg - firstAvgKg converted to lbs)"),
   pctGain: zod.number(),
 });
 export const GetMostImprovedResponse = zod.array(GetMostImprovedItem);

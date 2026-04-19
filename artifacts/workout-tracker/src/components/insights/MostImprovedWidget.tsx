@@ -35,7 +35,7 @@ export function MostImprovedWidget({ dateParams }: MostImprovedWidgetProps) {
               const isGain = item.pctGain >= 0;
               const firstLbs = Math.round(item.firstAvgKg * KG_TO_LBS * 10) / 10;
               const lastLbs = Math.round(item.lastAvgKg * KG_TO_LBS * 10) / 10;
-              const absGainLbs = Math.round((item.lastAvgKg - item.firstAvgKg) * KG_TO_LBS * 10) / 10;
+              const absGainLbs = item.absGainLbs;
               return (
                 <div key={item.exercise} className="flex items-center gap-3">
                   <span className="text-xs font-bold text-muted-foreground w-4 tabular-nums">{i + 1}</span>
