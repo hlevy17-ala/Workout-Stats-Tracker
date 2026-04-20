@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 import { db, workoutSetsTable } from "@workspace/db";
 import {
   UploadWorkoutCsvResponse,
@@ -126,7 +126,7 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
     return;
   }
 
-  const toInsert: { date: string; exercise: string; reps: number; weightKg: string }[] = [];
+  const toInsert: { date: string; exercise: string; reps: number; weightKg: string; source: string }[] = [];
   let skipped = 0;
 
   for (let i = 1; i < lines.length; i++) {
@@ -152,6 +152,7 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
       exercise,
       reps,
       weightKg: weightKg.toFixed(6),
+      source: "csv",
     });
   }
 
@@ -166,7 +167,7 @@ router.post("/workouts/upload", upload.single("file"), async (req, res): Promise
   const CHUNK_SIZE = 1000;
 
   await db.transaction(async (tx) => {
-    await tx.delete(workoutSetsTable);
+    await tx.delete(workoutSetsTable).where(eq(workoutSetsTable.source, "csv"));
     for (let i = 0; i < toInsert.length; i += CHUNK_SIZE) {
       await tx.insert(workoutSetsTable).values(toInsert.slice(i, i + CHUNK_SIZE));
     }
@@ -188,7 +189,7 @@ router.post("/workouts/log", async (req, res): Promise<void> => {
   const { date, exercises } = parsed.data;
   const KG_TO_LBS = 2.20462;
 
-  const toInsert: { date: string; exercise: string; reps: number; weightKg: string }[] = [];
+  const toInsert: { date: string; exercise: string; reps: number; weightKg: string; source: string }[] = [];
   for (const ex of exercises) {
     for (let i = 0; i < ex.sets; i++) {
       toInsert.push({
@@ -196,6 +197,7 @@ router.post("/workouts/log", async (req, res): Promise<void> => {
         exercise: ex.exercise.trim(),
         reps: ex.reps,
         weightKg: (ex.weightLbs / KG_TO_LBS).toFixed(6),
+        source: "manual",
       });
     }
   }

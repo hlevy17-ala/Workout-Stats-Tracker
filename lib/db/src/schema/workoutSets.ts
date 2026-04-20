@@ -8,6 +8,7 @@ export const workoutSetsTable = pgTable("workout_sets", {
   exercise: text("exercise").notNull(),
   reps: integer("reps").notNull(),
   weightKg: numeric("weight_kg", { precision: 12, scale: 6 }).notNull(),
+  source: text("source").notNull().default("csv"),
 });
 
 export const insertWorkoutSetSchema = createInsertSchema(workoutSetsTable).omit({ id: true });

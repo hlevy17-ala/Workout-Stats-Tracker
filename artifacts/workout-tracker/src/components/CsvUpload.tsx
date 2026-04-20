@@ -219,7 +219,7 @@ export function CsvUpload() {
             )}
             <div className="flex items-center gap-2 w-full max-w-sm justify-center">
               <Dumbbell className="w-4 h-4 text-chart-2" />
-              <p className="text-xs text-muted-foreground">All charts and insights have been updated</p>
+              <p className="text-xs text-muted-foreground">All charts and insights have been updated. Manually logged workouts were not affected.</p>
             </div>
             <Button variant="outline" onClick={handleReset} className="gap-2">
               <RotateCcw className="w-4 h-4" />
@@ -372,6 +372,7 @@ export function CsvUpload() {
                   </div>
                   <p className="text-xs text-muted-foreground pt-0.5">
                     Needs columns for: date, exercise name, reps, weight. Warmup and multiplier columns are optional.
+                    Workouts you've logged manually will not be overwritten.
                   </p>
                 </div>
               </div>
